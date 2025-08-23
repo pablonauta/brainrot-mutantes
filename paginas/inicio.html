@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loop or Perish - Inicio</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="overlay">
+    <header>
+      <h1>¡Bienvenido a Loop or Perish!</h1>
+      <p>Mira el video explicativo y escribe tu nombre para empezar a jugar.</p>
+    </header>
+
+    <main>
+      <!-- Video explicativo -->
+      <section class="video-section">
+        <video controls width="640">
+          <source src="videos/explicacion.mp4" type="video/mp4">
+          Tu navegador no soporta la etiqueta de video.
+        </video>
+      </section>
+
+      <!-- Formulario para ingresar nombre -->
+      <section class="player-name">
+        <form id="nameForm">
+          <label for="playerName">Tu nombre:</label>
+          <input type="text" id="playerName" name="playerName" placeholder="Escribe tu nombre" required>
+          <button type="submit">Comenzar Juego</button>
+        </form>
+      </section>
+    </main>
+
+    <footer>
+      <p>© 2025 Loop or Perish. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+
+  <script>
+    // Guardar nombre y pasar a la siguiente página
+    document.getElementById('nameForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const playerName = document.getElementById('playerName').value.trim();
+      if (playerName) {
+        localStorage.setItem('playerName', playerName);
+        window.location.href = 'juego.html'; // Página del juego
+      }
+    });
+  </script>
+</body>
+</html>
