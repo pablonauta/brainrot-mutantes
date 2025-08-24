@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Órbita de Memes — Briefing Nivel 2</title>
+  <link rel="stylesheet" href="/css/intro.css">
+</head>
+<body>
+  <main class="panel" role="main">
+    <h1 id="title">Gangnam Style Mining — Briefing</h1>
+
+    <!-- Imagen temática (sin texto incrustado) -->
+    <figure class="hero">
+      <img
+        src="/img/asteroide-gangnam.png"
+        alt="Un asteroide con vibra de baile ilumina el campo espacial; una nave algo oxidada se acerca para cosecharlo mientras el ritmo sacude el vacío."
+        width="1200" height="675"
+        loading="eager" decoding="async">
+      <figcaption>
+        La cosecha de asteroides al ritmo de <em>Gangnam Style</em> requiere precisión: si fallás, brotan brain rots.
+      </figcaption>
+    </figure>
+
+    <p id="hello"></p>
+
+    <section aria-labelledby="mission-title" class="mission">
+      <h2 id="mission-title">🎯 Misión</h2>
+      <p>
+        Un asteroide “bailable” está emitiendo ondas que despiertan brain rots. Tu tarea es
+        sincronizar la recolección con pasos perfectos.
+      </p>
+      <ul>
+        <li>Inventario inicial: <strong>19 “Mover”</strong> y <strong>2 “Ciclos”</strong>.</li>
+        <li>Usá <strong>exactamente 2 ciclos</strong> y agregá <strong>al menos 1 “Mover” suelto</strong> en la raíz.</li>
+        <li>Cada ciclo debe tener <strong>≥ 1 “Mover”</strong> adentro (nada de ciclos vacíos).</li>
+        <li>Los <strong>aportes</strong> de ambos ciclos deben ser <strong>diferentes</strong>.<br>
+          <small><em>Aporte = repeticiones del ciclo × “Mover” dentro del ciclo</em></small>
+        </li>
+        <li>Objetivo: <strong>18 pasos exactos</strong>. Ni más, ni menos.</li>
+      </ul>
+
+      <p>
+        ⚠ Si te pasás o te quedás corto, el asteroide desata un remix de memes corruptos.  
+        🏆 Si acertás, desbloqueás el <strong>Nivel 3</strong>.
+      </p>
+    </section>
+
+    <button id="start" type="button">🕺 Comenzar Nivel 2</button>
+  </main>
+
+  <script>
+    // Personaliza el saludo con el nombre guardado en el inicio
+    (function () {
+      const name = localStorage.getItem('playerName') || 'Recluta';
+      document.getElementById('title').textContent = `Gangnam Style Mining — Briefing para ${name}`;
+      document.getElementById('hello').textContent = `Listo, ${name}. Ajustá tus ciclos, marcá el paso y cosechá el asteroide.`;
+
+      document.getElementById('start').addEventListener('click', () => {
+        window.location.href = '/paginas/nivel2.html';
+      });
+    })();
+  </script>
+</body>
+</html>

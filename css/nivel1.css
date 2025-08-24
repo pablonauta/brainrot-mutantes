@@ -14,6 +14,12 @@
   --blue:#00bfff;
   --loop-border:#ffcc00;
   --loop-bg:#332b00;
+
+  /* Tablero */
+  --planet-d: 56px;   /* diámetro del planeta */
+  --ship-d:   22px;   /* diámetro de la nave */
+  --orbit-gap: 10px;  /* separación mínima planeta/nave */
+  --orbit-pref-d: 80%;/* diámetro ideal de la órbita respecto al tablero */
 }
 
 *{box-sizing:border-box}
@@ -21,7 +27,7 @@
 body{
   margin:0; padding:0;
   background:var(--bg); color:var(--text);
-  font-family:"Orbitron",sans-serif;
+  font-family:"Orbitron",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
 }
 
 h1,h2{
@@ -29,6 +35,61 @@ h1,h2{
   color:var(--accent);
   text-shadow:0 0 8px var(--accent);
   max-width:1100px; margin:16px auto; padding:0 16px;
+}
+
+/* ====== Header / Instrucciones (look Brain Rot, sin cambiar HTML) ====== */
+.topbar{
+  padding: 18px 16px 14px;
+  background:
+    radial-gradient(1200px 220px at 50% -40%, rgba(255,77,109,.10), transparent 60%),
+    linear-gradient(180deg, rgba(255,77,109,.06), transparent 60%);
+  border-bottom: 1px solid var(--edge-2);
+}
+.topbar h1{
+  margin: 0 0 6px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: .2px;
+  text-shadow: 0 0 10px rgba(255,77,109,.35);
+}
+.topbar p{
+  margin: 0 auto;
+  max-width: 960px;
+  color: #cfd2d6;
+  line-height: 1.5;
+  text-wrap: balance;
+  font-size: 0.975rem;
+}
+.topbar p strong{
+  display: inline-block;
+  margin: 0 .12rem .18rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255,77,109,.10);
+  border: 1px solid rgba(255,77,109,.45);
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: .15px;
+}
+#targetX{
+  display: inline-block;
+  padding: 0 6px;
+  margin-left: 2px;
+  border-radius: 6px;
+  background: #141419;
+  border: 1px dashed rgba(255,77,109,.55);
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(255,77,109,.12);
+}
+.topbar p em{
+  color: var(--accent);
+  font-style: normal;
+  text-shadow: 0 0 6px rgba(255,77,109,.25);
+}
+@media (max-width: 720px){
+  .topbar h1{ font-size: 1.12rem; }
+  .topbar p{ font-size: .95rem; }
+  .topbar p strong{ padding: 1px 7px; }
 }
 
 /* ===================== CONTENEDOR + LAYOUT ===================== */
@@ -169,14 +230,73 @@ h1,h2{
   background:#1a1a1a;
 }
 
-/* ===================== TABLERO ===================== */
+/* ===================== TABLERO (rota .orbiter) ===================== */
 .board{
-  width:100%; aspect-ratio:1/1; max-height:80vh;
-  border:2px solid var(--edge-2); border-radius:8px;
-  background:#0e0e16; overflow:hidden;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 80vh;
+  border: 2px solid var(--edge-2);
+  border-radius: 8px;
+  background: #0e0e16;
+  overflow: hidden;
 }
 .game h2{ margin-top:.25rem; }
 @media (max-width:699px){ .board{ max-height:none; } }
+
+/* Planeta centrado */
+.board .planet{
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  width: var(--planet-d); height: var(--planet-d);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd36b, #ff9b2f 55%, #b55a1a 80%);
+  box-shadow: 0 0 18px rgba(255,211,107,.5), inset 0 0 8px #7c3e12;
+}
+
+/* Órbita (círculo) y contenedor que rota (.orbiter) */
+.board .orbit,
+.board .orbiter{
+  position: absolute; left: 50%; top: 50%;
+  width:  clamp(
+            calc(var(--planet-d) + (var(--ship-d) * 2) + (var(--orbit-gap) * 2)),
+            var(--orbit-pref-d),
+            90%
+          );
+  height: clamp(
+            calc(var(--planet-d) + (var(--ship-d) * 2) + (var(--orbit-gap) * 2)),
+            var(--orbit-pref-d),
+            90%
+          );
+  transform: translate(-50%, -50%);
+  transform-origin: 50% 50%;
+  border-radius: 50%;
+}
+.board .orbit{
+  border: 2px dashed #555;
+  opacity: .95;
+}
+/* .orbiter: SIN borde; lo rota el JS con transform: rotate(...) */
+.board .orbiter{}
+
+/* La nave va pegada al borde derecho del círculo que rota */
+.board .ship{
+  position: absolute; top: 50%; right: 0;
+  transform: translateY(-50%);
+  width: var(--ship-d); height: var(--ship-d);
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #9dd6ff, #2a8cff 70%);
+  border: 2px solid #bfe1ff;
+  box-shadow: 0 0 12px rgba(157,214,255,.55);
+}
+
+/* Leyenda bajo tablero */
+.legend{
+  margin-top: 8px;
+  color: #a7abb3;
+  text-align: center;
+  font-size: .95rem;
+}
 
 /* ===== Botonera de herramientas ===== */
 .tools {
@@ -185,7 +305,6 @@ h1,h2{
   align-items: center;
   gap: 10px;
 }
-
 .tools button {
   font-size: 1.05rem;
   padding: 10px 16px;
@@ -198,7 +317,6 @@ h1,h2{
   box-shadow: 0 2px 6px rgba(0,0,0,.35);
   transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-
 .tools button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.45); }
 .tools button:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 
@@ -215,29 +333,3 @@ h1,h2{
 /* Slider un poco más grande */
 .tools .speed input[type="range"] { height: 6px; }
 .tools .speed { display: flex; align-items: center; gap: 8px; font-size: .95rem; }
-
-/* ===== Tablero centrado con planeta, órbita y nave ===== */
-.board { position: relative; --orbit-r: 38%; }
-
-.board .planet {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: 56px; height: 56px; border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffd36b, #ff9b2f 55%, #b55a1a 80%);
-  box-shadow: 0 0 18px rgba(255, 211, 107, .5), inset 0 0 8px #7c3e12;
-}
-
-.board .orbit {
-  position: absolute; left: 50%; top: 50%;
-  width: calc(var(--orbit-r) * 2); height: calc(var(--orbit-r) * 2);
-  margin-left: calc(var(--orbit-r) * -1); margin-top: calc(var(--orbit-r) * -1);
-  border: 2px dashed #555; border-radius: 50%; opacity: .9;
-}
-
-.board .ship {
-  position: absolute; left: 50%; top: 50%;
-  width: 22px; height: 22px; border-radius: 50%;
-  transform: translate(-50%, -50%) rotate(0deg) translateX(var(--orbit-r));
-  background: radial-gradient(circle at 35% 35%, #9dd6ff, #2a8cff 70%);
-  border: 2px solid #bfe1ff;
-  box-shadow: 0 0 12px rgba(157, 214, 255, .55);
-}

@@ -37,16 +37,6 @@
     </footer>
   </div>
 
-  <script>
-    // Guardar nombre y pasar a la siguiente página
-    document.getElementById('nameForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const playerName = document.getElementById('playerName').value.trim();
-      if (playerName) {
-        localStorage.setItem('playerName', playerName);
-        window.location.href = 'nivel1.html'; // Página del juego
-      }
-    });
-  </script>
+  <script src="/scripts/inicio.js"></script>
 </body>
 </html>

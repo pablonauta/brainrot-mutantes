@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loop or Perish — Brain Rot 3×4×3</title>
+  <link rel="stylesheet" href="/css/nivel4.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>🧠 Loop or Perish — Brain Rot 3×4×3</h1>
+    <p>
+      Armá un patrón con <strong>bucles anidados</strong> (3 y 4 en cualquier orden).<br/>
+      El <strong>loop interno</strong> debe ser exactamente: 
+      <code>ANTIROT → SELLAR → FOCO</code>.<br/>
+      Objetivo: <strong id="targetX">36</strong> pasos exactos.
+    </p>
+  </header>
+
+  <main class="container">
+    <div class="layout">
+      <!-- Panel -->
+      <section class="panel">
+        <h2>Inventario</h2>
+        <div class="inventory">
+          <div class="inv-line"><span class="inv-label">ANTIROT restantes</span><span class="inv-badge" id="count-antirot">1</span></div>
+          <div class="inv-line"><span class="inv-label">SELLAR restantes</span><span class="inv-badge" id="count-seal">1</span></div>
+          <div class="inv-line"><span class="inv-label">FOCO restantes</span><span class="inv-badge" id="count-focus">1</span></div>
+          <div class="inv-line"><span class="inv-label">Ciclos restantes</span><span class="inv-badge" id="count-loops">2</span></div>
+        </div>
+
+        <h3>Bloques</h3>
+        <div id="blocks-panel" class="blocks">
+          <!-- Acciones -->
+          <div class="block simple antirot" data-type="antirot" draggable="true" title="Purgar la rotación (ANTIROT)">ANTIROT</div>
+          <div class="block simple seal"    data-type="seal"    draggable="true" title="Sellar el nodo (SELLAR)">SELLAR</div>
+          <div class="block simple focus"   data-type="focus"   draggable="true" title="Enfocar la mente (FOCO)">FOCO</div>
+
+          <!-- Loops fijos {3,4} -->
+          <div class="block loop" data-type="loop" data-n="3" draggable="true" title="Crear ciclo ×3">
+            <div class="loop-head">Repetir <span class="loop-n">3</span>×</div>
+            <div class="dropzone"></div>
+          </div>
+          <div class="block loop" data-type="loop" data-n="4" draggable="true" title="Crear ciclo ×4">
+            <div class="loop-head">Repetir <span class="loop-n">4</span>×</div>
+            <div class="dropzone"></div>
+          </div>
+        </div>
+
+        <div class="tools">
+          <button id="btn-clear">🧹 Limpiar programa</button>
+          <button id="btn-run" disabled>▶ Ejecutar</button>
+          <button id="btn-reset">↺ Reiniciar nivel</button>
+          <label class="speed">
+            Velocidad: <input id="speed" type="range" min="60" max="600" value="220"/>
+          </label>
+        </div>
+
+        <div class="plan">
+          <div>Meta: <strong id="plan-target">36</strong></div>
+          <div>Tu programa ejecuta: <strong id="plan-now">0/36</strong></div>
+        </div>
+
+        <details class="tips">
+          <summary>Consejos</summary>
+          <ul>
+            <li>Debe haber <strong>1 ciclo en raíz</strong> y dentro de él <strong>1 ciclo</strong> (anidado).</li>
+            <li>En el ciclo interno poné <strong>ANTIROT → SELLAR → FOCO</strong>.</li>
+            <li>Los tamaños de ciclo deben ser <strong>3 y 4</strong> (en cualquier orden).</li>
+          </ul>
+        </details>
+      </section>
+
+      <!-- Programa -->
+      <section class="workspace">
+        <h2>Programa</h2>
+        <div id="workspace" class="dropzone root-drop"></div>
+      </section>
+
+      <!-- Tablero -->
+      <section class="game">
+        <h2>Tablero</h2>
+        <div id="board" class="board"></div>
+        <div class="legend">
+          <span>🛰️ Celda preparada</span> · <span>🌀 ANTIROT</span> · <span>🔒 SELLAR</span> · <span>🎯 FOCO</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <small>Si el patrón no es perfecto, el Brain Rot se ríe en 144p 😿.</small>
+  </footer>
+
+  <script src="/scripts/nivel4.js"></script>
+</body>
+</html>

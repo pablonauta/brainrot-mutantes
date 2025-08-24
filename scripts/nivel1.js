@@ -1,412 +1,523 @@
-/***** NIVEL 1 — Sandbox con animación y mejor drop-in
- * Edición:
- *  - En root: se aceptan loops y giros sueltos (right).
- *  - En loop: solo giros (right), se puede reordenar y poner varios.
- *  - Inventario: 2 loops + 10 giros (ajustable).
- * Ejecución:
- *  - SIEMPRE corre. Muestra resultado correcto/incorrecto.
- *  - La “manija de velocidad” controla el tiempo por paso (ms).
- * Visual:
- *  - Tablero con órbita: cada “right” avanza un segmento del círculo.
- *  - Si total=20 termina justo en el planeta; si no, queda desfasado.
- *****/
+/***** NIVEL 1 — JS (19 vueltas en inventario, DnD robusto, rieles para sueltas, validación por aporte de cada ciclo, órbita centrada, salto a nivel 2) *****/
 
-/* --------- CONFIG --------- */
+/* ---------------------- CONFIG ---------------------- */
 const CONFIG = {
   targetSteps: 20,
-  inventory: { loops: 2, rights: 10 },
-  board: { size: 260, radius: 100 } // px
+  // Stock por defecto: 2 ciclos y SOLO 19 vueltas (obliga a usar bucles)
+  inventoryDefaults: { loops: 2, turns: 19 },
+  orbitMsPerTurnDefault: 250,
+  nextLevelUrl: '/paginas/nivel2.html'   // ← cambiá la ruta si tu Nivel 2 vive en otro lado
 };
 
-/* --------- DOM --------- */
-const wsEl       = document.getElementById('workspace');
-const runBtn     = document.getElementById('btn-run');
-const clearBtn   = document.getElementById('btn-clear');
-const resetBtn   = document.getElementById('btn-reset');
-const speedInput = document.getElementById('speed');
+/* ---------------------- DOM ---------------------- */
+const wsEl        = document.getElementById('workspace'); // root-drop
+const runBtn      = document.getElementById('btn-run');
+const clearBtn    = document.getElementById('btn-clear');
+const resetBtn    = document.getElementById('btn-reset');
+const speedInput  = document.getElementById('speed');
 
-const countSimpleEl = document.getElementById('count-simple');
-const countLoopsEl  = document.getElementById('count-loops');
-const planNowEl     = document.getElementById('plan-now');
-const planTargetEl  = document.getElementById('plan-target');
-const targetXEl     = document.getElementById('targetX');
+const countTurnsEl = document.getElementById('count-simple'); // “Instrucciones (Vuelta) restantes”
+const countLoopsEl = document.getElementById('count-loops');  // “Ciclos restantes”
+const planNowEl    = document.getElementById('plan-now');
+const planTargetEl = document.getElementById('plan-target');
+const targetXEl    = document.getElementById('targetX');
 
-const boardEl = document.getElementById('board');
+const panelEl     = document.getElementById('blocks-panel');
+const boardEl     = document.getElementById('board');
 
-/* --------- Inventario --------- */
-let inv = { loops: CONFIG.inventory.loops, rights: CONFIG.inventory.rights };
+/* ---------------------- Inventario ---------------------- */
+let inv = {
+  loops: parseInt(countLoopsEl?.textContent || '', 10),
+  turns: parseInt(countTurnsEl?.textContent || '', 10)
+};
+if (Number.isNaN(inv.loops)) inv.loops = CONFIG.inventoryDefaults.loops;
+if (Number.isNaN(inv.turns)) inv.turns = CONFIG.inventoryDefaults.turns;
+// Forzamos el mínimo de este nivel (19 vueltas)
+inv.turns = Math.max(inv.turns, CONFIG.inventoryDefaults.turns);
 
-/* ==================== TABLERO / ÓRBITA ==================== */
-let shipEl, planetEl, orbitEl;
-function setupBoard(){
-  if (!boardEl) return;
-  boardEl.innerHTML = '';
+/* ============================================================
+   TABLERO (planeta centrado + órbita + nave)
+   ============================================================ */
+function ensureBoard() {
+  if (!boardEl) return null;
+  if (!boardEl.querySelector('.planet'))  boardEl.insertAdjacentHTML('beforeend', '<div class="planet"></div>');
+  if (!boardEl.querySelector('.orbit'))   boardEl.insertAdjacentHTML('beforeend', '<div class="orbit"></div>');
+  if (!boardEl.querySelector('.orbiter')) boardEl.insertAdjacentHTML('beforeend', '<div class="orbiter"><div class="ship"></div></div>');
+  const orb = boardEl.querySelector('.orbiter');
+  if (orb) orb.style.transform = 'translate(-50%,-50%) rotate(0deg)'; // centrado + rotación
+  return orb;
+}
+ensureBoard();
 
-  const wrap = document.createElement('div');
-  wrap.className = 'orbit-wrap';
-  wrap.style.width = wrap.style.height = CONFIG.board.size + 'px';
+let currentAngle = 0;
+function msPerTurn() {
+  const v = parseInt(speedInput?.value || '', 10);
+  return Number.isNaN(v) ? CONFIG.orbitMsPerTurnDefault : Math.max(60, v);
+}
+function simulate(turns) {
+  const orbiter = ensureBoard();
+  if (!orbiter || turns <= 0) return;
 
-  orbitEl = document.createElement('div');
-  orbitEl.className = 'orbit-track';
-  orbitEl.style.width = orbitEl.style.height = (CONFIG.board.radius*2) + 'px';
+  const startAngle = currentAngle;
+  const endAngle   = startAngle + 360 * turns;
+  const duration   = msPerTurn() * turns;
 
-  planetEl = document.createElement('div');
-  planetEl.className = 'planet';
-  planetEl.textContent = '🪐';
-
-  shipEl = document.createElement('div');
-  shipEl.className = 'ship';
-  shipEl.textContent = '🚀';
-
-  wrap.append(orbitEl, planetEl, shipEl);
-  boardEl.appendChild(wrap);
-
-  resetShip();
+  let start = null;
+  function step(ts) {
+    if (!start) start = ts;
+    const t = Math.min(1, (ts - start) / duration);
+    const u = t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // easing
+    const ang = startAngle + (endAngle - startAngle) * u;
+    orbiter.style.transform = `translate(-50%,-50%) rotate(${ang}deg)`;
+    currentAngle = ang;
+    if (t < 1) requestAnimationFrame(step);
+    else currentAngle = endAngle % 360;
+  }
+  requestAnimationFrame(step);
 }
 
-function resetShip(){
-  if (!shipEl) return;
-  // arranca apuntando “a la derecha” en ángulo 0
-  shipAngle = 0;
-  drawShip(shipAngle);
+/* ============================================================
+   UTILIDADES DE PROGRAMA
+   ============================================================ */
+const TYPE_LOOP = 'loop';
+const TYPE_TURN = 'turn';
+
+const rootChildren = () => [...wsEl.children];
+const rootLoops    = () => rootChildren().filter(el => (el.dataset?.type || '').toLowerCase() === TYPE_LOOP);
+
+// Todas las “Vueltas” que NO están dentro de un loop (incluye rieles)
+function rootTurns() {
+  return [...wsEl.querySelectorAll('[data-type="turn"]')].filter(el => !el.closest('.block.loop'));
 }
+const loopDrop = (loopEl) => loopEl.querySelector('.dropzone');
 
-let shipAngle = 0; // grados (0..360)
-function drawShip(angleDeg){
-  const r = CONFIG.board.radius;
-  const cx = CONFIG.board.size/2;
-  const cy = CONFIG.board.size/2;
-
-  // colocamos el cohete sobre la circunferencia
-  const rad = angleDeg * Math.PI/180;
-  const x = cx + r * Math.cos(rad);
-  const y = cy + r * Math.sin(rad);
-
-  shipEl.style.left = (x - 12) + 'px';
-  shipEl.style.top  = (y - 12) + 'px';
-  shipEl.style.transform = `rotate(${angleDeg+90}deg)`; // que "mire" tangencialmente
-}
-
-/* ==================== PROGRAMA / SERIALIZACIÓN ==================== */
-function readProgram(zone){
-  const steps = [];
-  [...zone.children].forEach(el=>{
-    const t = el.dataset.type;
-    if (!t) return;
-    if (t === 'loop'){
-      const n = parseInt(el.querySelector('.loop-n').textContent,10) || 0;
-      const inner = el.querySelector('.inner-drop');
-      steps.push({ type:'loop', n, body: readProgram(inner) });
-    } else if (t === 'right'){
-      steps.push({ type:'right' });
-    }
+function totalTurns() {
+  // total = vueltas sueltas en root + sum(reps * vueltas_inside) por cada loop
+  let total = rootTurns().length;
+  rootLoops().forEach(loop => {
+    const reps = parseInt(loop.querySelector('.loop-n')?.textContent || '0', 10) || 0;
+    const inside = (loopDrop(loop)?.querySelectorAll(`[data-type="${TYPE_TURN}"]`)?.length) || 0;
+    if (inside > 0) total += reps * inside;
   });
-  return steps;
+  return total;
 }
 
-function expandedCount(list){
-  let c = 0;
-  for (const step of list){
-    if (step.type === 'loop') c += step.n * expandedCount(step.body);
-    else if (step.type === 'right') c += 1;
+// Reglas del nivel (valida por "aporte" de cada ciclo)
+function checkConstraints() {
+  const errors = [];
+  const loops = rootLoops();
+  const turnsOutside = rootTurns().length;
+
+  // 1) exactamente 2 bucles
+  if (loops.length !== 2) {
+    errors.push(`Debés usar exactamente 2 ciclos (tenés ${loops.length}).`);
   }
-  return c;
-}
 
-// lista plana de 'right' expandida (para animar paso a paso)
-function flatten(list){
-  const out = [];
-  for (const step of list){
-    if (step.type === 'loop'){
-      for (let i=0;i<step.n;i++) out.push(...flatten(step.body));
-    } else if (step.type === 'right'){
-      out.push('right');
+  // 2) cada bucle con al menos 1 “Vuelta” adentro
+  let empties = 0;
+  const stats = [];
+  loops.forEach(l => {
+    const reps = parseInt(l.querySelector('.loop-n')?.textContent || '0', 10) || 0;
+    const inside = loopDrop(l)?.querySelectorAll(`[data-type="${TYPE_TURN}"]`)?.length || 0;
+    const contrib = reps * inside; // ← aporte real del ciclo
+    stats.push({ reps, inside, contrib });
+    if (inside === 0) empties++;
+  });
+  if (empties > 0) {
+    errors.push(`⚠ Hay ${empties} ciclo(s) vacío(s): emiten ondas negativas que fortalecen a los brain rot.`);
+  }
+
+  // 3) los aportes de los dos ciclos deben ser distintos
+  if (stats.length === 2) {
+    const [a, b] = stats;
+    if (a.contrib === b.contrib) {
+      errors.push(`Los dos ciclos no pueden sumar lo mismo (ahora: ${a.contrib} y ${b.contrib}). Cambiá las repeticiones o la cantidad de “Vueltas” dentro.`);
     }
   }
-  return out;
+
+  // 4) al menos 1 vuelta suelta en raíz
+  if (turnsOutside < 1) errors.push(`Necesitás al menos 1 “Vuelta” fuera de los ciclos (en el área de Programa).`);
+
+  // 5) total = 20
+  const total = totalTurns();
+  if (total !== CONFIG.targetSteps) errors.push(`Total actual: ${total}. El objetivo es ${CONFIG.targetSteps}.`);
+
+  return errors;
 }
 
-/* ==================== INVENTARIO / UI ==================== */
-function refreshPlanUI(){
-  const prog = readProgram(wsEl);
-  const now  = expandedCount(prog);
-  planNowEl && (planNowEl.textContent = String(now));
-
-  // sandbox: siempre habilitado
-  runBtn.disabled = false;
-  runBtn.title = 'Podés ejecutar incluso con errores';
-}
-function refreshInventoryUI(){
-  countLoopsEl.textContent  = String(inv.loops);
-  countSimpleEl.textContent = String(inv.rights);
-
-  const loopTpl  = document.querySelector('#blocks-panel .block.loop');
-  const rightTpl = document.querySelector('#blocks-panel .block.simple[data-type="right"]');
-
-  loopTpl  && loopTpl.classList.toggle('disabled', inv.loops <= 0 || getLoops().length >= 2);
-  rightTpl && rightTpl.classList.toggle('disabled', inv.rights <= 0);
-
-  // si quedaron en el HTML blocks no válidos, apagarlos
-  document.querySelector('#blocks-panel .block.simple[data-type="move"]')?.classList.add('disabled');
-  document.querySelector('#blocks-panel .block.simple[data-type="left"]')?.classList.add('disabled');
+function refreshPlanAndRunButton() {
+  const now = totalTurns();
+  if (planNowEl) planNowEl.textContent = String(now);
+  // Se puede ejecutar si hay algo (para ver mensajes y aprender)
+  const hasSomething = rootLoops().length > 0 || rootTurns().length > 0;
+  if (runBtn) runBtn.disabled = !hasSomething;
 }
 
-function refundBlock(el){
-  const t = el.dataset.type;
-  if (t === 'loop'){
-    inv.loops++;
-    refundChildren(el.querySelector('.inner-drop'));
-  } else if (t === 'right'){
-    inv.rights++;
-  }
-  refreshInventoryUI();
-}
-function refundChildren(zone){
-  if (!zone) return;
-  [...zone.children].forEach(child=>{
-    refundBlock(child);
-    child.remove();
-  });
+function refreshInventoryUI() {
+  if (countLoopsEl) countLoopsEl.textContent = String(inv.loops);
+  if (countTurnsEl) countTurnsEl.textContent = String(inv.turns);
+  panelEl?.querySelector('.block.loop')?.classList.toggle('disabled', inv.loops <= 0 || rootLoops().length >= 2);
+  panelEl?.querySelector('.block.simple[data-type="turn"]')?.classList.toggle('disabled', inv.turns <= 0);
 }
 
-/* ==================== BLOQUES ==================== */
-function mini(txt, title, onClick){
+/* ============================================================
+   FABRICACIÓN DE BLOQUES
+   ============================================================ */
+function makeMiniButton(txt, title, onClick) {
   const b = document.createElement('button');
-  b.className = 'btn-mini';
-  b.textContent = txt;
+  b.className = 'btn-mini btn-remove';
+  b.type = 'button';
   b.title = title;
+  b.textContent = txt;
   b.addEventListener('click', onClick);
   return b;
 }
-function createLoopBlock(){
-  const container = document.createElement('div');
-  container.className = 'program-block loop-block';
-  container.dataset.type = 'loop';
 
-  const head = document.createElement('div');
-  head.className = 'loop-header';
-
-  const lbl = document.createElement('span');
-  lbl.className = 'label';
-  lbl.textContent = 'Repetir';
-
-  const n = document.createElement('span');
-  n.className = 'loop-n';
-  n.textContent = '10';
-  n.title = 'Click para cambiar (0–20)';
-  n.addEventListener('click', ()=>{
-    const val = prompt('¿Cuántas repeticiones? (0-20)', n.textContent);
-    const k = Math.max(0, Math.min(20, parseInt(val||n.textContent,10)));
-    n.textContent = String(isNaN(k)?0:k);
-    refreshPlanUI();
-  });
-
-  const controls = document.createElement('div');
-  controls.className = 'controls';
-  controls.append(
-    mini('✖','Eliminar', ()=>{ refundBlock(container); container.remove(); refreshPlanUI(); })
-  );
-
-  head.append(lbl, n, document.createTextNode('×'), controls);
-
-  const inner = document.createElement('div');
-  inner.className = 'inner-drop dropzone';
-
-  container.append(head, inner);
-  return container;
-}
-
-function createRightBlock(){
+function createTurnBlock() {
   const item = document.createElement('div');
-  item.className = 'program-block';
-  item.dataset.type = 'right';
+  item.className = 'block simple placed';
+  item.dataset.type = TYPE_TURN;
 
   const label = document.createElement('span');
   label.className = 'label';
-  label.textContent = 'Girar Derecha (Vuelta)';
+  label.textContent = 'Dar una vuelta al planeta';
 
-  const controls = document.createElement('div');
-  controls.className = 'controls';
-  controls.append(
-    mini('✖','Eliminar', ()=>{ refundBlock(item); item.remove(); refreshPlanUI(); })
-  );
+  const ctrl = document.createElement('div');
+  ctrl.className = 'controls';
+  ctrl.append(makeMiniButton('✖', 'Eliminar', () => {
+    item.remove();
+    inv.turns++;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+  }));
 
-  item.append(label, controls);
+  item.append(label, ctrl);
   return item;
 }
 
-/* ==================== DRAG & DROP (mejor inserción con placeholder) ==================== */
-const getLoops = () => [...wsEl.children].filter(el => el.dataset.type === 'loop');
-const loopInner = (loopEl)=> loopEl.querySelector('.inner-drop');
+function createLoopBlock() {
+  const loop = document.createElement('div');
+  loop.className = 'block loop placed';
+  loop.dataset.type = TYPE_LOOP;
 
-const SIMPLE_TYPES = new Set(['right']);
-const ROOT_TYPES   = new Set(['right','loop']);
+  const head = document.createElement('div');
+  head.className = 'loop-head';
+  head.append('Repetir ');
+  const nEl = document.createElement('span');
+  nEl.className = 'loop-n';
+  nEl.textContent = '3';
+  nEl.title = 'Click para cambiar (1–20)';
+  head.append(nEl, '×');
 
-let ghost; // placeholder visual
-function ensureGhost(){
-  if (!ghost){
-    ghost = document.createElement('div');
-    ghost.className = 'ghost-slot';
-  }
-  return ghost;
-}
-
-function closestChildIndex(zone, mouseY){
-  // devuelve índice donde insertar según posición vertical
-  const children = [...zone.children].filter(n=>n!==ghost);
-  for (let i=0;i<children.length;i++){
-    const r = children[i].getBoundingClientRect();
-    const mid = r.top + r.height/2;
-    if (mouseY < mid) return i;
-  }
-  return children.length;
-}
-
-/* drag desde panel */
-document.querySelectorAll('#blocks-panel .block').forEach(el=>{
-  el.addEventListener('dragstart', e=>{
-    const type = el.dataset.type;
-    if (!ROOT_TYPES.has(type)){ e.preventDefault(); return; }
-    if (type==='loop' && inv.loops<=0) { e.preventDefault(); return; }
-    if (type==='right'&& inv.rights<=0) { e.preventDefault(); return; }
-
-    e.dataTransfer.setData('source', 'panel');
-    e.dataTransfer.setData('block-type', type);
-    e.dataTransfer.effectAllowed='copy';
+  head.addEventListener('click', (e) => {
+    const t = e.target.closest('.loop-n');
+    if (!t) return;
+    const val = parseInt(prompt('Repeticiones (1–20):', t.textContent) || t.textContent, 10);
+    const nn = Math.min(20, Math.max(1, isNaN(val) ? 1 : val));
+    t.textContent = String(nn);
+    refreshPlanAndRunButton();
   });
+
+  const btnX = makeMiniButton('✖', 'Eliminar ciclo', () => {
+    // devolver TODAS las “Vueltas” internas al inventario
+    const numInside = (dz.querySelectorAll(`[data-type="${TYPE_TURN}"]`)?.length) || 0;
+    inv.turns += numInside;
+    loop.remove();
+    inv.loops++;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+  });
+
+  const dz = document.createElement('div');
+  dz.className = 'dropzone';
+  wireInnerDropzone(dz);   // acepta múltiples vueltas
+  wireLoopContainer(loop); // drop en cualquier parte del loop → enruta a su dropzone
+
+  loop.append(head, dz, btnX);
+  return loop;
+}
+
+/* ============================================================
+   RIELES DE ROOT PARA “VUELTAS” SUELTAS
+   ============================================================ */
+function ensureRootRails() {
+  if (!wsEl) return;
+  // rail superior
+  if (!wsEl.querySelector('.root-rail[data-rail="top"]')) {
+    const top = document.createElement('div');
+    top.className = 'dropzone root-rail';
+    top.dataset.rail = 'top';
+    top.innerHTML = '<div class="rail-hint">Soltá una “Vuelta” suelta aquí</div>';
+    wsEl.insertBefore(top, wsEl.firstChild);
+    wireRootRail(top, 'top');
+  }
+  // rail inferior
+  if (!wsEl.querySelector('.root-rail[data-rail="bottom"]')) {
+    const bottom = document.createElement('div');
+    bottom.className = 'dropzone root-rail';
+    bottom.dataset.rail = 'bottom';
+    bottom.innerHTML = '<div class="rail-hint">…o acá abajo</div>';
+    wsEl.appendChild(bottom);
+    wireRootRail(bottom, 'bottom');
+  }
+}
+
+function wireRootRail(rail, pos) {
+  if (!rail || rail.dataset.wired) return;
+  rail.dataset.wired = '1';
+
+  rail.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  });
+
+  rail.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    let payload = {};
+    try { payload = JSON.parse(e.dataTransfer.getData('application/json') || '{}'); } catch {}
+    const { from, type } = payload || {};
+    if (from !== 'panel') return;
+    if (type !== TYPE_TURN) return;
+    if (inv.turns <= 0) return;
+
+    const turn = createTurnBlock();
+    rail.appendChild(turn);  // apila DENTRO del riel
+    inv.turns--;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+  });
+}
+
+/* ============================================================
+   DRAG & DROP (application/json) + Fix doble drop
+   ============================================================ */
+function setPayload(e, obj) {
+  try { e.dataTransfer.setData('application/json', JSON.stringify(obj)); } catch {}
+  try { e.dataTransfer.setData('text/plain', obj.type || ''); } catch {}
+}
+
+/* Panel: dragstart */
+function wirePanelDrag() {
+  if (!panelEl) return;
+  panelEl.querySelectorAll('.block[draggable="true"]').forEach(b => {
+    if (b.dataset.wired) return;
+    b.dataset.wired = '1';
+    b.addEventListener('dragstart', (e) => {
+      const type = (b.dataset.type || '').toLowerCase();
+      if (type !== TYPE_LOOP && type !== TYPE_TURN) { e.preventDefault(); return; }
+      if (type === TYPE_LOOP && inv.loops <= 0) { e.preventDefault(); return; }
+      if (type === TYPE_TURN && inv.turns <= 0) { e.preventDefault(); return; }
+      setPayload(e, { from: 'panel', type });
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+  });
+}
+wirePanelDrag();
+
+/* --- Helpers --- */
+function isInnerZone(target) {
+  const dz = target.closest('.dropzone');
+  // Es inner si es .dropzone y NO tiene la clase root-drop
+  return !!dz && !dz.classList.contains('root-drop');
+}
+// Insertar antes del rail inferior (si existe) o al final
+function beforeRailBottomOrEnd(node) {
+  const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
+  if (railBottom) wsEl.insertBefore(node, railBottom);
+  else wsEl.appendChild(node);
+}
+
+/* Root (workspace): permite soltar un 2º ciclo encima del 1º y sigue aceptando “Vueltas” sueltas */
+wsEl.addEventListener('dragover', (e) => {
+  if (isInnerZone(e.target)) return;   // las dropzones internas se manejan solas
+  e.preventDefault();
+  e.stopPropagation();
 });
 
-/* delegación global */
-function zoneFromEventTarget(target){
-  return target.closest?.('.inner-drop, .root-drop') || null;
+wsEl.addEventListener('drop', (e) => {
+  if (isInnerZone(e.target)) return;   // evita doble drop con inner zones
+  e.preventDefault();
+  e.stopPropagation();
+
+  let payload = {};
+  try { payload = JSON.parse(e.dataTransfer.getData('application/json') || '{}'); } catch {}
+  const { from, type } = payload || {};
+  if (from !== 'panel') return;
+
+  if (type === TYPE_LOOP) {
+    if (inv.loops <= 0) return;
+    if (rootLoops().length >= 2) return;
+
+    const loop = createLoopBlock();
+
+    // Si estamos sobre un loop existente, decidir antes/después según mitad del bloque
+    const overLoop = e.target.closest('.block.loop');
+    if (overLoop) {
+      const r = overLoop.getBoundingClientRect();
+      const after = (e.clientY > r.top + r.height / 2);
+      wsEl.insertBefore(loop, after ? overLoop.nextSibling : overLoop);
+    } else {
+      beforeRailBottomOrEnd(loop);
+    }
+
+    inv.loops--;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+    return;
+  }
+
+  if (type === TYPE_TURN) {
+    if (inv.turns <= 0) return;
+    const turn = createTurnBlock();
+    beforeRailBottomOrEnd(turn); // apilá sueltas al final (antes del rail bottom)
+    inv.turns--;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+    return;
+  }
+});
+
+/* Drop dentro de la dropzone del loop: múltiples “Vueltas” y sin burbujeo */
+function wireInnerDropzone(dz) {
+  if (!dz || dz.dataset.wired) return;
+  dz.dataset.wired = '1';
+
+  dz.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // clave para evitar que el root se entere
+  });
+
+  dz.addEventListener('drop', (e) => {
+    e.preventDefault();
+    e.stopPropagation(); // clave
+
+    let payload = {};
+    try { payload = JSON.parse(e.dataTransfer.getData('application/json') || '{}'); } catch {}
+    const { from, type } = payload || {};
+    if (from !== 'panel') return;
+    if (type !== TYPE_TURN) return;
+    if (inv.turns <= 0) return;
+
+    const turn = createTurnBlock();
+    dz.appendChild(turn);     // múltiples dentro del loop
+    inv.turns--;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+  });
 }
 
-document.addEventListener('dragover', e=>{
-  const zone = zoneFromEventTarget(e.target);
-  if (!zone) return;
-  e.preventDefault();
-  e.dataTransfer.dropEffect='copy';
+/* Contenedor del loop: SOLO maneja “Vueltas”.
+   Si se suelta un LOOP encima, deja que burbujee al root (para insertar 2º ciclo). */
+function wireLoopContainer(loop) {
+  if (!loop || loop.dataset.loopWired) return;
+  loop.dataset.loopWired = '1';
 
-  // sólo mostrar ghost donde tiene sentido
-  const isRoot = zone.classList.contains('root-drop');
-  const isInner= zone.classList.contains('inner-drop');
-  const type = e.dataTransfer.getData('block-type');
+  // No frenamos la burbuja en dragover (root también decide)
+  loop.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    // ¡sin stopPropagation!
+  });
 
-  if ((isRoot && ROOT_TYPES.has(type)) || (isInner && SIMPLE_TYPES.has(type))){
-    const g = ensureGhost();
-    const idx = closestChildIndex(zone, e.clientY);
-    if (g.parentElement !== zone) zone.appendChild(g);
-    zone.insertBefore(g, zone.children[idx] || null);
-  }
-}, true);
+  loop.addEventListener('drop', (e) => {
+    let payload = {};
+    try { payload = JSON.parse(e.dataTransfer.getData('application/json') || '{}'); } catch {}
+    const { from, type } = payload || {};
 
-document.addEventListener('dragleave', e=>{
-  const zone = zoneFromEventTarget(e.target);
-  if (!zone) return;
-  // si salimos del contenedor, ocultar ghost
-  setTimeout(()=>{
-    if (ghost && ghost.parentElement && !zone.contains(document.elementFromPoint(e.clientX, e.clientY))){
-      ghost.remove();
-    }
-  }, 0);
-}, true);
+    // Si no es turno, dejamos que el root lo maneje (no prevenimos ni paramos)
+    if (from !== 'panel' || type !== TYPE_TURN) return;
 
-document.addEventListener('drop', e=>{
-  const zone = zoneFromEventTarget(e.target);
-  if (!zone) return;
-  e.preventDefault();
+    // Es una “Vuelta”: ahora sí manejamos acá y frenamos
+    e.preventDefault();
+    e.stopPropagation();
 
-  const src  = e.dataTransfer.getData('source');
-  const type = e.dataTransfer.getData('block-type');
-  if (src !== 'panel' || !type) return;
+    if (inv.turns <= 0) return;
+    const dz = loopDrop(loop);
+    if (!dz) return;
 
-  const isRoot = zone.classList.contains('root-drop');
-  const isInner= zone.classList.contains('inner-drop');
-
-  if (isRoot && ROOT_TYPES.has(type)){
-    if (type==='loop'){
-      if (inv.loops<=0 || getLoops().length>=2) return;
-      const el = createLoopBlock();
-      zone.insertBefore(el, (ghost && ghost.parentElement===zone)? ghost : null);
-      inv.loops--;
-    } else if (type==='right'){
-      if (inv.rights<=0) return;
-      const el = createRightBlock();
-      zone.insertBefore(el, (ghost && ghost.parentElement===zone)? ghost : null);
-      inv.rights--;
-    }
-  } else if (isInner && SIMPLE_TYPES.has(type)){
-    if (type==='right' && inv.rights>0){
-      const el = createRightBlock();
-      zone.insertBefore(el, (ghost && ghost.parentElement===zone)? ghost : null);
-      inv.rights--;
-    }
-  }
-
-  ghost?.remove();
-  refreshInventoryUI();
-  refreshPlanUI();
-}, true);
-
-/* ==================== EJECUCIÓN / ANIMACIÓN ==================== */
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-async function runProgram(){
-  const prog   = readProgram(wsEl);
-  const flat   = flatten(prog);
-  const total  = flat.length;
-  const delay  = parseInt(speedInput?.value || '200',10);
-
-  // una vuelta = 360/CONFIG.targetSteps grados (segmento pedagógico)
-  const stepDeg = 360 / CONFIG.targetSteps;
-
-  // reset visual
-  resetShip();
-
-  for (let i=0;i<flat.length;i++){
-    // cada 'right' avanza un segmento
-    shipAngle = (shipAngle + stepDeg) % 360;
-    drawShip(shipAngle);
-    await sleep(delay);
-  }
-
-  // feedback (pero nunca bloqueamos la ejecución)
-  const loops = getLoops();
-  const empties = loops.filter(l => loopInner(l).children.length===0).length;
-
-  if (loops.length!==2){
-    alert(`⚠ Tenés ${loops.length} ciclo(s). Resultado: ${total} vuelta(s).`);
-  } else if (empties>0){
-    alert(`💀 Hay ${empties} ciclo(s) vacío(s): emiten señal de brain rot. Resultado: ${total} vuelta(s).`);
-  } else if (total !== CONFIG.targetSteps){
-    alert(`❌ Hiciste ${total} vuelta(s) en lugar de ${CONFIG.targetSteps}.`);
-  } else {
-    alert('🏆 ¡Exacto! Órbita de 20 completada.');
-  }
+    const turn = createTurnBlock();
+    dz.appendChild(turn);     // múltiples
+    inv.turns--;
+    refreshInventoryUI();
+    refreshPlanAndRunButton();
+  });
 }
 
-/* ==================== BOTONES ==================== */
+/* Cablear loops preexistentes (si hubiera) */
+wsEl.querySelectorAll('.block.loop').forEach(loop => {
+  wireInnerDropzone(loopDrop(loop));
+  wireLoopContainer(loop);
+});
+
+/* ============================================================
+   RUN con diagnóstico (reglas) + salto a Nivel 2 (tras animación)
+   ============================================================ */
+function runProgram() {
+  const total = totalTurns();
+
+  // Lanzamos la animación si hay vueltas
+  if (total > 0) simulate(total);
+
+  // Validar reglas
+  const errors = checkConstraints();
+  if (errors.length) {
+    // Si no cumple, mostramos diagnóstico inmediatamente (como antes)
+    alert(errors.join('\n'));
+    return;
+  }
+
+  // ✅ Éxito: esperamos a que termine la animación antes de alert + redirect
+  const animMs = msPerTurn() * total;
+  setTimeout(() => {
+    alert('🏆 ¡Exacto! Órbita de 20 lograda. Pasás al Nivel 2…');
+    try { localStorage.setItem('nivel1Complete', 'true'); } catch {}
+    // pequeño colchón para que el usuario perciba el final antes de saltar
+    setTimeout(() => { window.location.assign(CONFIG.nextLevelUrl); }, 450);
+  }, Math.max(0, animMs + 120)); // +120ms de margen por seguridad
+}
+
+/* ============================================================
+   BOTONERA
+   ============================================================ */
 runBtn?.addEventListener('click', runProgram);
-clearBtn?.addEventListener('click', ()=>{
-  refundChildren(wsEl);
-  wsEl.innerHTML='';
-  refreshPlanUI();
-  resetShip();
-});
-resetBtn?.addEventListener('click', ()=>{
-  refundChildren(wsEl);
-  wsEl.innerHTML='';
-  inv = { loops: CONFIG.inventory.loops, rights: CONFIG.inventory.rights };
+
+clearBtn?.addEventListener('click', () => {
+  // Devolver bloques al stock (NO borra los rieles)
+  rootTurns().forEach(t => { t.remove(); inv.turns++; });
+  rootLoops().forEach(loop => {
+    const inside = loopDrop(loop)?.querySelectorAll(`[data-type="${TYPE_TURN}"]`)?.length || 0;
+    inv.turns += inside; // devolver todas las internas
+    loop.remove();
+    inv.loops++;
+  });
   refreshInventoryUI();
-  refreshPlanUI();
-  resetShip();
+  refreshPlanAndRunButton();
+  // reset visual
+  currentAngle = 0;
+  const orbiter = ensureBoard();
+  if (orbiter) orbiter.style.transform = 'translate(-50%,-50%) rotate(0deg)';
 });
 
-/* ==================== INIT ==================== */
-(function init(){
-  targetXEl    && (targetXEl.textContent    = String(CONFIG.targetSteps));
-  planTargetEl && (planTargetEl.textContent = String(CONFIG.targetSteps));
+resetBtn?.addEventListener('click', () => {
+  // limpiar programa y restaurar inventario por defecto (NO borra los rieles)
+  rootTurns().forEach(t => t.remove());
+  rootLoops().forEach(loop => loop.remove());
+  inv = { ...CONFIG.inventoryDefaults };
   refreshInventoryUI();
-  refreshPlanUI();
-  setupBoard();
+  refreshPlanAndRunButton();
+  currentAngle = 0;
+  const orbiter = ensureBoard();
+  if (orbiter) orbiter.style.transform = 'translate(-50%,-50%) rotate(0deg)';
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+(function init() {
+  if (targetXEl)    targetXEl.textContent    = String(CONFIG.targetSteps);
+  if (planTargetEl) planTargetEl.textContent = String(CONFIG.targetSteps);
+  ensureRootRails();          // rieles de root para vueltas sueltas
+  refreshInventoryUI();
+  refreshPlanAndRunButton();
 })();

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loop or Perish - Nivel 3</title>
+  <link rel="stylesheet" href="/css/nivel3.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Loop or Perish — Nivel 3: Satélites de Gatitos</h1>
+    <p>
+      Encendé los satélites para transmitir <strong>videos de gatos</strong>.
+      Usá <strong>2 ciclos</strong> y combiná <strong>SYNC</strong> y <strong>BEAM</strong> para lograr
+      <strong id="targetX">24</strong> pasos totales, alternando acciones y con cantidades equilibradas.
+    </p>
+  </header>
+
+  <main class="container">
+    <div class="layout">
+      <!-- Panel -->
+      <section class="panel">
+        <h2>Inventario</h2>
+        <div class="inventory">
+          <div class="inv-line">
+            <span class="inv-label">Acciones SYNC restantes</span>
+            <span class="inv-badge" id="count-sync">4</span>
+          </div>
+          <div class="inv-line">
+            <span class="inv-label">Acciones BEAM restantes</span>
+            <span class="inv-badge" id="count-beam">4</span>
+          </div>
+          <div class="inv-line">
+            <span class="inv-label">Ciclos restantes</span>
+            <span class="inv-badge" id="count-loops">2</span>
+          </div>
+        </div>
+
+        <h3>Bloques</h3>
+        <div id="blocks-panel" class="blocks">
+          <div class="block simple sync" data-type="sync" draggable="true" title="Sincroniza satélites">
+            SYNC
+          </div>
+          <div class="block simple beam" data-type="beam" draggable="true" title="Emite el haz de video felino">
+            BEAM
+          </div>
+          <div class="block loop" data-type="loop" draggable="true">
+            <div class="loop-head">Repetir <span class="loop-n">3</span>×</div>
+            <div class="dropzone"></div>
+          </div>
+        </div>
+
+        <div class="tools">
+          <button id="btn-clear">🧹 Limpiar programa</button>
+          <button id="btn-run" disabled>▶ Ejecutar</button>
+          <button id="btn-reset">↺ Reiniciar nivel</button>
+          <label class="speed">
+            Velocidad:
+            <input id="speed" type="range" min="60" max="600" value="240"/>
+          </label>
+        </div>
+
+        <div class="plan">
+          <div>Meta: <strong id="plan-target">24</strong></div>
+          <div>Tu programa ejecuta: <strong id="plan-now">0/24</strong></div>
+        </div>
+
+        <details class="tips">
+          <summary>Consejos</summary>
+          <ul>
+            <li>En <strong>Programa</strong> soltá <strong>hasta 2 ciclos</strong>.</li>
+            <li>Dentro de cada ciclo, usá <strong>al menos 1 SYNC y 1 BEAM</strong>.</li>
+            <li>Debe haber <strong>al menos 1 acción suelta</strong> fuera de los ciclos.</li>
+            <li>Acciones <strong>alternadas</strong> y <strong>balanceadas</strong> (mismo # de SYNC y BEAM).</li>
+          </ul>
+        </details>
+      </section>
+
+      <!-- Workspace -->
+      <section class="workspace">
+        <h2>Programa</h2>
+        <div id="workspace" class="dropzone root-drop"></div>
+      </section>
+
+      <!-- Tablero -->
+      <section class="game">
+        <h2>Constelación</h2>
+        <div id="board" class="board">
+          <!-- JS arma la escena -->
+        </div>
+        <div class="legend">
+          <span>🛰️ = Satélite</span> <span>🐱 = Video de gato</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <small>“Sin sincronía no hay gatitos.”</small>
+  </footer>
+
+  <script src="/scripts/nivel3.js"></script>
+</body>
+</html>

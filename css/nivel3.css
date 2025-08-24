@@ -1,0 +1,51 @@
+/* --- Base --- */
+body{background:#0d0d0d;color:#fff;font-family:"Orbitron",sans-serif;margin:0}
+h1,h2{color:#ff4d6d;text-align:center;text-shadow:0 0 8px #ff4d6d}
+.container{max-width:1100px;margin:0 auto;padding:16px;box-sizing:border-box}
+.layout{display:grid;grid-template-columns:1fr;gap:16px}
+@media(min-width:1100px){.layout{grid-template-columns:300px minmax(0,1fr) 380px;grid-template-areas:"panel workspace game"} .panel{grid-area:panel}.workspace{grid-area:workspace}.game{grid-area:game}}
+
+/* Panel / blocks */
+#blocks-panel{display:flex;flex-wrap:wrap;gap:8px;padding:12px;border-radius:8px;background:#1a1a1a}
+.block{border:2px solid #555;border-radius:6px;background:#2a2a2a;padding:8px 12px;margin:5px;box-shadow:0 2px 4px rgba(0,0,0,.3);cursor:grab;transition:transform .15s,border-color .15s}
+.block:hover{transform:scale(1.05);border-color:#ff4d6d}
+.block.sync{border-color:#00bfff;background:#0f2030}
+.block.beam{border-color:#ff7ad9;background:#311228}
+.block.loop{border-left:5px solid #ffcc00;background:#332b00}
+
+.dropzone{min-height:56px;padding:10px;margin:8px 0;border:2px dashed #777;border-radius:6px;background:#1b1b1b}
+.root-drop{min-height:420px;background:#121212;border:2px dashed #666;border-radius:10px;padding:16px}
+
+/* Workspace blocks (compact) */
+#workspace .block{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 10px;margin:6px 0;font-weight:700}
+#workspace .block.sync{border:2px solid #00bfff;background:#0f2030}
+#workspace .block.beam{border:2px solid #ff7ad9;background:#311228}
+#workspace .block.loop{display:block;border:2px solid #ffcc00;background:#332b00;border-radius:8px;padding:8px 12px}
+#workspace .block.loop .dropzone{min-height:56px;margin-top:6px;background:#161616}
+
+/* Buttons */
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools button{background:#272727;border:1px solid #555;border-radius:8px;color:#fff;padding:8px 10px;cursor:pointer}
+.tools button:hover{border-color:#ff4d6d}
+.speed{margin-left:auto}
+
+/* Board */
+.board{width:100%;aspect-ratio:1/1;max-height:80vh;border:2px solid #444;border-radius:8px;background:#0e0e16;position:relative;overflow:hidden}
+.constellation{position:absolute;inset:0;display:grid;place-items:center}
+.sky{position:absolute;inset:0;background:radial-gradient(ellipse at center,#0e0e16 0%,#0a0a12 60%,#07070b 100%)}
+.sats{position:relative;width:70%;height:70%}
+.sat{position:absolute;font-size:28px;filter:drop-shadow(0 0 6px rgba(255,255,255,.25));transition:transform .15s}
+.sat.a{left:10%;top:15%}
+.sat.b{right:10%;bottom:15%}
+.sat.synced{transform:scale(1.12)}
+.wave{position:absolute;inset:0;border:2px solid #ff7ad9;border-radius:999px;opacity:0;transform:scale(.2)}
+.wave.beam{animation:ping 700ms ease-out}
+@keyframes ping{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.2)}}
+
+.timeline{position:absolute;left:8%;right:8%;bottom:8%;height:10px;background:#1f1f2a;border-radius:999px;overflow:hidden}
+.timeline .progress{height:100%;width:0;background:linear-gradient(90deg,#00bfff,#ff7ad9);transition:width .2s linear}
+
+/* Toast (simple) */
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);opacity:0;background:#222;border:1px solid #555;border-radius:10px;padding:10px 14px}
+.toast.is-visible{transform:translate(-50%,0);opacity:1}
+.toast--success{border-color:#17d47b}

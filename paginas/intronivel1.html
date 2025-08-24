@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Órbita de Memes — Briefing</title>
+  <link rel="stylesheet" href="/css/intro.css"><!-- o /css/nivel4.css -->
+  <!-- (Opcional) Preload de la hero para evitar saltos de layout -->
+  <link rel="preload" as="image" href="/assets/img/orbita-memes.png">
+</head>
+<body>
+  <main class="panel">
+    <!-- Título personalizado con el nombre -->
+    <h1 id="title">Órbita de Memes — Briefing</h1>
+    <p id="hello" class="lead"></p>
+
+  <!-- Imagen temática (sin texto incrustado en la imagen) -->
+<figure class="hero hero--cover">
+  <img
+    src="/img/orbita-memes.png"
+    alt="Nave espacial oxidada orbitando un planeta-meme; un brain rot en la cabina contiene los glitches que intentan escapar."
+    loading="eager" decoding="async">
+  <figcaption>
+    La nave con el Brain Rot a bordo mantiene la órbita del planeta-meme para impedir la fuga de memes corruptos.
+  </figcaption>
+</figure>
+
+    <section aria-labelledby="mission-title">
+      <h2 id="mission-title"><span aria-hidden="true">🎯</span> Desafío de la misión</h2>
+      <p>
+        Los Brain Rot han infectado un planeta-meme. Si logran romper la órbita,
+        liberarán un enjambre interminable de stickers cósmicos. Tu misión es trazar una
+        <strong>órbita perfecta de 20 vueltas exactas</strong>.
+      </p>
+      <ul>
+        <li>Inventario inicial: <strong>19 “Vueltas”</strong> y <strong>2 “Ciclos”</strong>.</li>
+        <li>Usá <strong>exactamente 2 ciclos</strong> y además <strong>al menos 1 Vuelta suelta</strong> en la raíz.</li>
+        <li>Cada ciclo debe tener <strong>una o más Vueltas</strong> adentro (nada de ciclos vacíos).</li>
+        <li>Los aportes de los <strong>dos ciclos deben ser distintos</strong>.
+          <em>(Aporte = repeticiones del ciclo × vueltas dentro del ciclo)</em>.
+        </li>
+        <li>La suma de todo debe dar <strong>20 vueltas</strong>. Ni más, ni menos.</li>
+      </ul>
+      <p>
+        ⚠ Si errás el cálculo, el planeta liberará <em>memes corruptos</em>.<br>
+        🏆 Si acertás, desbloquearás la ruta hacia el <strong>Nivel 2</strong>.
+      </p>
+    </section>
+
+    <p>
+      <button id="start" type="button">🚀 Comenzar Nivel 1</button>
+    </p>
+  </main>
+
+  <noscript>
+    <p style="text-align:center">Necesitás habilitar JavaScript para continuar.</p>
+  </noscript>
+
+  <script>
+    // Personalización accesible del título y bienvenida
+    document.addEventListener('DOMContentLoaded', () => {
+      const name = localStorage.getItem('playerName') || 'Recluta';
+      const titleEl = document.getElementById('title');
+      const helloEl = document.getElementById('hello');
+
+      titleEl.textContent = `Órbita de Memes — Briefing para ${name}`;
+      helloEl.textContent = `Bienvenido/a, ${name}. Prepará la nave para el desafío.`;
+
+      document.getElementById('start').addEventListener('click', () => {
+        window.location.href = '/paginas/nivel1.html';
+      });
+    });
+  </script>
+</body>
+</html>

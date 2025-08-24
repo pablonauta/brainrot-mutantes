@@ -3,13 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Loop or Perish - Nivel 1</title>
+  <title>Loop or Perish — Nivel 1: Órbita de 20</title>
   <link rel="stylesheet" href="/css/nivel1.css"/>
 </head>
 <body>
   <header class="topbar">
     <h1>Loop or Perish — Nivel 1: Órbita de 20</h1>
-    <p>Usá <strong>2 ciclos</strong> y poné <strong>1 “Vuelta”</strong> dentro de cada uno. Ajustá repeticiones para llegar a <strong id="targetX">20</strong>. Si no… <em>brain rots</em> 🧠⚡</p>
+    <p>
+      Disponés de <strong>19 “Vueltas”</strong> y <strong>2 “Ciclos”</strong>. Usá
+      <strong>exactamente 2 ciclos</strong> en la raíz y dejá <strong>al menos 1 “Vuelta” suelta</strong> fuera de los ciclos.
+      Cada ciclo debe contener <strong>una o más “Vueltas”</strong> (nada de ciclos vacíos) y los
+      <strong>aportes</strong> de ambos deben ser <strong>distintos</strong>
+      <em>(aporte = repeticiones × vueltas internas)</em>.
+      Ajustá repeticiones para llegar a <strong id="targetX">20</strong> vueltas exactas. Si no… <em>brain rots</em> 🧠⚡
+    </p>
   </header>
 
   <!-- CONTENEDOR CENTRADO -->
@@ -22,8 +29,8 @@
         <h2>Inventario</h2>
         <div class="inventory">
           <div class="inv-line">
-            <span class="inv-label">Instrucciones (Vuelta) restantes</span>
-            <span class="inv-badge" id="count-simple">2</span>
+            <span class="inv-label">Instrucciones (“Vuelta”) restantes</span>
+            <span class="inv-badge" id="count-simple">19</span>
           </div>
           <div class="inv-line">
             <span class="inv-label">Ciclos restantes</span>
@@ -33,19 +40,25 @@
 
         <h3>Bloques</h3>
         <div id="blocks-panel" class="blocks">
-          <div class="block simple" data-type="right" draggable="true">Girar Derecha</div>
-          <div class="block loop" data-type="loop" draggable="true">
-            Repetir <span class="loop-n">3</span>×
+          <!-- 1 vuelta completa -->
+          <div class="block simple" data-type="turn" draggable="true" title="Ejecuta 1 vuelta completa">
+            Dar una vuelta al planeta
+          </div>
+
+          <!-- contenedor de repeticiones -->
+          <div class="block loop" data-type="loop" draggable="true" title="Crear ciclo de repeticiones">
+            <div class="loop-head">Repetir <span class="loop-n">3</span>×</div>
+            <div class="dropzone"></div>
           </div>
         </div>
 
         <div class="tools">
           <button id="btn-clear">🧹 Limpiar programa</button>
-          <button id="btn-run"   disabled title="Debés llegar a 20 vueltas">▶ Ejecutar</button>
+          <button id="btn-run" disabled>▶ Ejecutar</button>
           <button id="btn-reset">↺ Reiniciar nivel</button>
           <label class="speed">
             Velocidad:
-            <input id="speed" type="range" min="50" max="600" value="250"/>
+            <input id="speed" type="range" min="50" max="600" value="250" />
           </label>
         </div>
 
@@ -57,10 +70,12 @@
         <details class="tips">
           <summary>Consejos</summary>
           <ul>
-            <li>En <strong>Programa</strong> (root) soltá <strong>solo loops</strong> (máx 2).</li>
-            <li>Dentro del loop, soltá <strong>Girar Derecha</strong> (1 por loop) — es la <em>Vuelta</em>.</li>
-            <li>Clic en el número del loop para cambiar repeticiones (1–20).</li>
-            <li>El botón Ejecutar se habilita solo cuando llegás a <strong>20</strong>.</li>
+            <li>En <strong>Programa</strong> (raíz) soltá solo <strong>loops</strong> (máximo 2).</li>
+            <li>Dentro de cada loop, soltá <strong>una o más “Vueltas”</strong> (no dejes ciclos vacíos).</li>
+            <li>Dejá <strong>al menos 1 “Vuelta” suelta</strong> en la raíz (fuera de ciclos).</li>
+            <li>Los <strong>aportes</strong> de los dos ciclos deben ser <strong>distintos</strong> (<em>reps × vueltas internas</em>).</li>
+            <li>Hacé clic en el número del loop para cambiar repeticiones (1–20).</li>
+            <li>Podés ejecutar en cualquier momento; si no cumple, verás un diagnóstico hasta llegar a <strong>20</strong>.</li>
           </ul>
         </details>
       </section>

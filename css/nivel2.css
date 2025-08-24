@@ -1,0 +1,119 @@
+/* ===== Base (mismo look del nivel 1) ===== */
+* { box-sizing: border-box; }
+:root{
+  --bg:#0d0d0d; --panel:#1a1a1a; --work:#121212; --block:#2a2a2a;
+  --accent:#ff4d6d; --cyan:#00bfff; --amber:#ffcc00; --ink:#fff;
+  --muted:#bbb; --dash:#777; --edge:#666;
+}
+body{
+  margin:0; padding:0; background:var(--bg); color:var(--ink);
+  font-family:"Orbitron",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;
+}
+h1,h2{ color:var(--accent); text-align:center; text-shadow:0 0 8px var(--accent); }
+
+.container{ max-width:1100px; margin:0 auto; padding:16px; }
+.layout{ display:grid; grid-template-columns:1fr; gap:16px; }
+@media (min-width:1100px){
+  .layout{ grid-template-columns:300px minmax(0,1fr) 380px; align-items:start;
+           grid-template-areas:"panel workspace game"; }
+  .panel{grid-area:panel;} .workspace{grid-area:workspace;} .game{grid-area:game;}
+}
+@media (min-width:700px) and (max-width:1099px){
+  .layout{ grid-template-columns:280px minmax(0,1fr);
+           grid-template-areas:"panel workspace" "panel game"; }
+}
+
+/* ===== Panel ===== */
+#blocks-panel{
+  display:flex; flex-wrap:wrap; gap:8px; padding:12px;
+  border-radius:8px; background:var(--panel); border-bottom:2px solid var(--accent);
+}
+.block{
+  border:2px solid #555; border-radius:8px; background:var(--block);
+  padding:8px 12px; margin:4px 0; box-shadow:0 2px 4px rgba(0,0,0,.3);
+  cursor:grab; user-select:none;
+  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.block:hover{ transform:scale(1.05); border-color:var(--accent); box-shadow:0 0 10px var(--accent); }
+.block.disabled{ opacity:.5; pointer-events:none; }
+
+/* ===== Workspace ===== */
+#workspace{
+  min-height:420px; padding:16px; background:var(--work);
+  border:2px dashed var(--edge); border-radius:10px;
+}
+.dropzone{
+  min-height:56px; padding:10px; margin:8px 0;
+  border:2px dashed var(--dash); border-radius:8px; background:#1b1b1b;
+}
+.rail-hint{ opacity:.65; font-size:.9rem; }
+
+/* Bloques dentro del programa (mismo lenguaje visual del nivel 1) */
+#workspace .block, #workspace .dropzone .block, #workspace [data-type], #workspace .placed{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  border:2px solid var(--cyan); border-radius:8px; background:#1a1a2e;
+  padding:6px 10px; margin:6px 0; color:var(--ink); font-weight:700;
+  box-shadow:0 2px 6px rgba(0,0,0,.4);
+}
+#workspace .block:hover{ border-color:var(--accent); transform:scale(1.04); }
+#workspace .block.loop{ border-color:var(--amber); background:#332b00; display:block; }
+#workspace .block.loop .loop-head{ display:flex; align-items:center; gap:8px; font-size:.95rem; }
+#workspace .block.loop .loop-n{
+  display:inline-block; margin:0 6px; padding:2px 6px;
+  border:1px solid var(--amber); border-radius:6px; background:#3b2a00; font-weight:800;
+}
+#workspace .block.loop .dropzone{
+  display:block; width:100%; min-height:56px; margin-top:6px; padding:8px;
+  border:2px dashed var(--dash); border-radius:6px; background:#1a1a1a;
+}
+
+/* Botoncito borrar */
+.btn-mini.btn-remove{
+  background:#2a2a2a; border:1px solid #555; color:#fff;
+  border-radius:6px; padding:2px 6px; line-height:1; cursor:pointer;
+}
+.btn-mini.btn-remove:hover{ filter:brightness(1.2); }
+
+/* Botonera */
+.tools{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center; }
+.tools button{
+  padding:10px 12px; border-radius:10px; border:0; font-weight:700; cursor:pointer;
+  background:#2b2b2b;
+}
+#btn-run{ background:var(--accent); }
+#btn-run:disabled{ opacity:.5; cursor:not-allowed; }
+
+/* ===== Board (estética nivel 1) ===== */
+.board{
+  width:100%; aspect-ratio:1/1; max-height:80vh; position:relative; overflow:hidden;
+  border:2px solid #444; border-radius:10px;
+  background:radial-gradient(ellipse at center, #0f1220 0%, #0a0d18 60%, #090a12 100%);
+}
+.field{ position:absolute; inset:0; }
+.track{
+  position:absolute; left:50%; top:8%; width:2px; height:84%; transform:translateX(-50%);
+  background:linear-gradient(#555, #888); box-shadow:0 0 10px rgba(0,191,255,.35);
+}
+.asteroid{
+  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  font-size:42px; filter:drop-shadow(0 0 10px rgba(255,200,0,.6));
+}
+/* La nave ahora se ancla al inicio de la pista (top:8%) y sube en Y */
+.mover{
+  position:absolute; left:50%; top:8%;
+  transform:translate(-50%, 0px); transition:transform .2s ease-out;
+}
+.ship{
+  font-size:36px; display:inline-block; filter:drop-shadow(0 0 8px rgba(255,77,109,.7));
+  animation:dance .8s infinite ease-in-out;
+}
+.ship.pause{ animation:none; }
+
+@keyframes dance{
+  0%,100%{ transform:translateY(0) rotate(0deg) scale(1); }
+  25%{ transform:translateY(-4px) rotate(-5deg) scale(1.02); }
+  50%{ transform:translateY(0) rotate(0deg) scale(1); }
+  75%{ transform:translateY(-4px) rotate(5deg) scale(1.02); }
+}
+
+.foot{ text-align:center; color:var(--muted); margin-top:12px; }

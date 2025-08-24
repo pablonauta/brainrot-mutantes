@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loop or Perish - Nivel 2</title>
+  <link rel="stylesheet" href="/css/nivel2.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Loop or Perish — Nivel 2: Gangnam Style Mining</h1>
+    <p>
+      Recolectá un asteroide “bailable” al ritmo de <em>Gangnam Style</em>.
+      Usá <strong>2 ciclos</strong>, cargá <strong>“Subir 1”</strong> dentro de cada uno
+      y agregá <strong>al menos 1 movimiento suelto</strong> en la raíz.
+      Ajustá tu coreografía hasta llegar a <strong id="targetX">18</strong> pasos exactos.
+      Si fallás… los <em>brain rots</em> despiertan. 🧠⚡
+    </p>
+  </header>
+
+  <main class="container">
+    <div class="layout">
+      <!-- Panel -->
+      <section class="panel">
+        <h2>Inventario</h2>
+        <div class="inventory">
+          <div class="inv-line">
+            <span class="inv-label">Instrucciones (“Subir 1”) restantes</span>
+            <span class="inv-badge" id="count-simple">19</span>
+          </div>
+          <div class="inv-line">
+            <span class="inv-label">Ciclos restantes</span>
+            <span class="inv-badge" id="count-loops">2</span>
+          </div>
+        </div>
+
+        <h3>Bloques</h3>
+        <div id="blocks-panel" class="blocks">
+          <!-- Movimiento -->
+          <div class="block simple" data-type="move" draggable="true" title="Subir 1 (un paso)">
+            Subir 1
+          </div>
+
+          <!-- Ciclo -->
+          <div class="block loop" data-type="loop" draggable="true">
+            <div class="loop-head">Repetir <span class="loop-n">3</span>×</div>
+            <div class="dropzone"></div>
+          </div>
+        </div>
+
+        <div class="tools">
+          <button id="btn-clear">🧹 Limpiar programa</button>
+          <button id="btn-run" disabled>▶ Ejecutar</button>
+          <button id="btn-reset">↺ Reiniciar</button>
+          <label class="speed">
+            Velocidad:
+            <input id="speed" type="range" min="50" max="600" value="250"/>
+          </label>
+        </div>
+
+        <div class="plan">
+          <div>Meta: <strong id="plan-target">18</strong></div>
+          <div>Tu programa ejecuta: <strong id="plan-now">0/18</strong></div>
+        </div>
+
+        <details class="tips">
+          <summary>Consejos</summary>
+          <ul>
+            <li>En <strong>Programa</strong> soltá <strong>hasta 2 ciclos</strong> y movimientos sueltos.</li>
+            <li>Cada ciclo debe contener <strong>al menos 1 “Subir 1”</strong>.</li>
+            <li>Hacé clic en el número del ciclo para cambiar repeticiones (1–20).</li>
+            <li>Los <em>aportes</em> de ambos ciclos deben ser <strong>diferentes</strong>.<br>
+              <small><em>Aporte = repeticiones × cantidad de “Subir 1” dentro del ciclo</em></small>
+            </li>
+            <li>Objetivo: <strong>18 pasos exactos</strong>.</li>
+          </ul>
+        </details>
+      </section>
+
+      <!-- Programa -->
+      <section class="workspace">
+        <h2>Programa</h2>
+        <div id="workspace" class="dropzone root-drop"></div>
+      </section>
+
+      <!-- Tablero -->
+      <section class="game">
+        <h2>Tablero</h2>
+        <div id="board" class="board"></div>
+        <div class="legend">
+          <span>🪨 = Asteroide</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="foot">
+    <small>“Si no son 18 exactos… PSY se va.”</small>
+  </footer>
+
+  <script src="/scripts/nivel2.js"></script>
+</body>
+</html>
