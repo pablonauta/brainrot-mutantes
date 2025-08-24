@@ -177,3 +177,67 @@ h1,h2{
 }
 .game h2{ margin-top:.25rem; }
 @media (max-width:699px){ .board{ max-height:none; } }
+
+/* ===== Botonera de herramientas ===== */
+.tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.tools button {
+  font-size: 1.05rem;
+  padding: 10px 16px;
+  min-height: 42px;
+  border-radius: 10px;
+  border: 1px solid #333;
+  background: linear-gradient(#2a2a2a, #222);
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.35);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+}
+
+.tools button:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.45); }
+.tools button:active { transform: translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+
+#btn-run {
+  border-color: #1f8f3a;
+  background: linear-gradient(#27ae60, #1e874b);
+  font-weight: 700;
+}
+#btn-run[disabled] {
+  filter: grayscale(0.6) brightness(0.85);
+  cursor: not-allowed;
+}
+
+/* Slider un poco más grande */
+.tools .speed input[type="range"] { height: 6px; }
+.tools .speed { display: flex; align-items: center; gap: 8px; font-size: .95rem; }
+
+/* ===== Tablero centrado con planeta, órbita y nave ===== */
+.board { position: relative; --orbit-r: 38%; }
+
+.board .planet {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 56px; height: 56px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffd36b, #ff9b2f 55%, #b55a1a 80%);
+  box-shadow: 0 0 18px rgba(255, 211, 107, .5), inset 0 0 8px #7c3e12;
+}
+
+.board .orbit {
+  position: absolute; left: 50%; top: 50%;
+  width: calc(var(--orbit-r) * 2); height: calc(var(--orbit-r) * 2);
+  margin-left: calc(var(--orbit-r) * -1); margin-top: calc(var(--orbit-r) * -1);
+  border: 2px dashed #555; border-radius: 50%; opacity: .9;
+}
+
+.board .ship {
+  position: absolute; left: 50%; top: 50%;
+  width: 22px; height: 22px; border-radius: 50%;
+  transform: translate(-50%, -50%) rotate(0deg) translateX(var(--orbit-r));
+  background: radial-gradient(circle at 35% 35%, #9dd6ff, #2a8cff 70%);
+  border: 2px solid #bfe1ff;
+  box-shadow: 0 0 12px rgba(157, 214, 255, .55);
+}
