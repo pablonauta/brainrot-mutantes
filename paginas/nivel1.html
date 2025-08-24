@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loop or Perish - Nivel 1</title>
+  <link rel="stylesheet" href="/css/nivel1.css"/>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Loop or Perish — Nivel 1: Órbita de 20</h1>
+    <p>Usá <strong>2 ciclos</strong> y poné <strong>1 “Vuelta”</strong> dentro de cada uno. Ajustá repeticiones para llegar a <strong id="targetX">20</strong>. Si no… <em>brain rots</em> 🧠⚡</p>
+  </header>
+
+  <main class="layout">
+    <!-- Panel de bloques -->
+    <section class="panel">
+      <h2>Inventario</h2>
+      <div class="inventory">
+        <div class="inv-line">
+          <span class="inv-label">Instrucciones (Vuelta) restantes</span>
+          <span class="inv-badge" id="count-simple">2</span>
+        </div>
+        <div class="inv-line">
+          <span class="inv-label">Ciclos restantes</span>
+          <span class="inv-badge" id="count-loops">2</span>
+        </div>
+      </div>
+
+      <h3>Bloques</h3>
+      <div id="blocks-panel" class="blocks">
+        <div class="block simple" data-type="move"  draggable="true">Mover 1</div>
+        <div class="block simple" data-type="left"  draggable="true">Girar Izquierda</div>
+        <div class="block simple" data-type="right" draggable="true">Girar Derecha</div>
+        <div class="block loop"   data-type="loop"  draggable="true">
+          Repetir <span class="loop-n">3</span>×
+        </div>
+      </div>
+
+      <div class="tools">
+        <button id="btn-clear">🧹 Limpiar programa</button>
+        <button id="btn-run"   disabled title="Debés llegar a 20 vueltas">▶ Ejecutar</button>
+        <button id="btn-reset">↺ Reiniciar nivel</button>
+        <label class="speed">
+          Velocidad:
+          <input id="speed" type="range" min="50" max="600" value="250"/>
+        </label>
+      </div>
+
+      <div class="plan">
+        <div>Meta: <strong id="plan-target">20</strong></div>
+        <div>Tu programa ejecuta: <strong id="plan-now">0</strong></div>
+      </div>
+
+      <details class="tips">
+        <summary>Consejos</summary>
+        <ul>
+          <li>En <strong>Programa</strong> (root) soltá <strong>solo loops</strong> (máx 2).</li>
+          <li>Dentro del loop, soltá <strong>Girar Derecha</strong> (1 por loop) — es la <em>Vuelta</em>.</li>
+          <li>Clic en el número del loop para cambiar repeticiones (1–20).</li>
+          <li>El botón Ejecutar se habilita solo cuando llegás a <strong>20</strong>.</li>
+        </ul>
+      </details>
+    </section>
+
+    <!-- Área de trabajo -->
+    <section class="workspace">
+      <h2>Programa</h2>
+      <div id="workspace" class="dropzone root-drop"></div>
+    </section>
+
+    <!-- Tablero decorativo -->
+    <section class="game">
+      <h2>Tablero</h2>
+      <div id="board" class="board"></div>
+      <div class="legend">
+        <span>🪐 = Planeta</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <small>“Si no son 20 exactas… los brain rots se propagan.”</small>
+  </footer>
+
+  <script src="/scripts/nivel1.js"></script>
+</body>
+</html>
