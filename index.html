@@ -3,13 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Brain Rot Mutantes: Ciclos en el Espacio</title>
+
+  <!-- Favicons (los que ya tenías) -->
+  <link rel="icon" href="/img/favicon-32.png" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/img/favicon-180.png">
+
+  <title>Loop or Perish</title>
+
+  <!-- Tu CSS global -->
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <!-- Encabezado -->
   <header>
-    <h1>🧠👾 Brain Rot Mutantes: Ciclos en el Espacio 👾🧠</h1>
+    <h1>🧠👾 Loop or Perish — Ciclos en el Espacio 👾🧠</h1>
   </header>
 
   <!-- Narrativa introductoria -->
@@ -21,9 +29,33 @@
       <p>🌌 Te retan a sobrevivir en arenas espaciales imposibles.</p>
     </section>
 
-    <!-- Botón de inicio -->
-    <section class="start">
-      <a href="paginas/inicio.html" class="btn">🚀 Start your cringe journey</a>
+    <!-- Selector de niveles -->
+    <section class="start" aria-label="Seleccionar nivel">
+      <p style="margin-bottom:.8rem">Elegí un briefing para empezar:</p>
+
+      <!-- Nivel 1 -->
+      <p>
+        <a id="go1" class="btn" href="/paginas/intronivel1.html">▶ Briefing — Nivel 1: Órbita de Memes</a>
+        <span id="st1" class="muted" style="margin-left:.5rem;"></span>
+      </p>
+
+      <!-- Nivel 2 (bloqueado hasta completar 1) -->
+      <p>
+        <a id="go2" class="btn" href="/paginas/intronivel2.html">▶ Briefing — Nivel 2: Maniobra Vertical</a>
+        <span id="st2" class="muted" style="margin-left:.5rem;"></span>
+      </p>
+
+      <!-- Nivel 3 (bloqueado hasta completar 2) -->
+      <p>
+        <a id="go3" class="btn" href="/paginas/intronivel3.html">▶ Briefing — Nivel 3: Satélites de Gatitos</a>
+        <span id="st3" class="muted" style="margin-left:.5rem;"></span>
+      </p>
+
+      <!-- Nivel 4 (bloqueado hasta completar 3) -->
+      <p>
+        <a id="go4" class="btn" href="/paginas/intronivel4.html">▶ Briefing — Nivel 4: Purga Brain Rot 3×4×3</a>
+        <span id="st4" class="muted" style="margin-left:.5rem;"></span>
+      </p>
     </section>
   </main>
 
@@ -31,5 +63,50 @@
   <footer>
     <p>© 2025 Team Brain Rot Mutantes | OA Gamificación</p>
   </footer>
+
+  <!-- Bloqueo/desbloqueo simple por progreso (opcional) -->
+  <script>
+    (function(){
+      // Flags que seteás en cada nivel (true cuando pasan)
+      const done1 = localStorage.getItem('nivel1Complete') === 'true';
+      const done2 = localStorage.getItem('nivel2Complete') === 'true';
+      const done3 = localStorage.getItem('nivel3Complete') === 'true';
+      const done4 = localStorage.getItem('nivel4Complete') === 'true';
+
+      // Helper para "bloquear" un <a> sin tocar tu CSS
+      function lockLink(a, locked, statusEl){
+        if (!a) return;
+        if (locked){
+          a.setAttribute('aria-disabled', 'true');
+          a.style.pointerEvents = 'none';
+          a.style.opacity = '.55';
+          a.style.filter = 'grayscale(25%)';
+          if (statusEl) statusEl.textContent = 'Bloqueado';
+        } else {
+          a.removeAttribute('aria-disabled');
+          a.style.pointerEvents = '';
+          a.style.opacity = '';
+          a.style.filter = '';
+          if (statusEl) statusEl.textContent = '';
+        }
+      }
+
+      // Nivel 1 siempre disponible
+      lockLink(document.getElementById('go1'), false, document.getElementById('st1'));
+      if (done1) document.getElementById('st1').textContent = 'Completado ✅';
+
+      // Nivel 2 depende de nivel 1
+      lockLink(document.getElementById('go2'), !done1, document.getElementById('st2'));
+      if (done2) document.getElementById('st2').textContent = 'Completado ✅';
+
+      // Nivel 3 depende de nivel 2
+      lockLink(document.getElementById('go3'), !done2, document.getElementById('st3'));
+      if (done3) document.getElementById('st3').textContent = 'Completado ✅';
+
+      // Nivel 4 depende de nivel 3
+      lockLink(document.getElementById('go4'), !done3, document.getElementById('st4'));
+      if (done4) document.getElementById('st4').textContent = 'Completado ✅';
+    })();
+  </script>
 </body>
 </html>
