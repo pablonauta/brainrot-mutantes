@@ -6,7 +6,7 @@ const CONFIG = {
   // Stock por defecto: 2 ciclos y SOLO 19 vueltas (obliga a usar bucles)
   inventoryDefaults: { loops: 2, turns: 19 },
   orbitMsPerTurnDefault: 250,
-  nextLevelUrl: 'intronivel2.html'   // ← cambiá la ruta si tu Nivel 2 vive en otro lado
+  nextLevelUrl: '/brainrot-mutantes/paginas/intronivel2.html'   // ← cambiá la ruta si tu Nivel 2 vive en otro lado
 };
 
 /* ---------------------- DOM ---------------------- */
@@ -473,7 +473,7 @@ function runProgram() {
     alert('🏆 ¡Exacto! Órbita de 20 lograda. Pasás al Nivel 2…');
     try { localStorage.setItem('nivel1Complete', 'true'); } catch {}
     // pequeño colchón para que el usuario perciba el final antes de saltar
-    setTimeout(() => { window.location.assign(CONFIG.nextLevelUrl); }, 450);
+    setTimeout(() => { window.location.href = CONFIG.nextLevelUrl; }, 450);
   }, Math.max(0, animMs + 120)); // +120ms de margen por seguridad
 }
 
