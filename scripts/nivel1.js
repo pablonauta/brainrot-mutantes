@@ -6,7 +6,7 @@ const CONFIG = {
   // Stock por defecto: 2 ciclos y SOLO 19 vueltas (obliga a usar bucles)
   inventoryDefaults: { loops: 2, turns: 19 },
   orbitMsPerTurnDefault: 250,
-  nextLevelUrl: '/paginas/intronivel2.html'   // ← cambiá la ruta si tu Nivel 2 vive en otro lado
+  nextLevelUrl: '/brainrot-mutantes/paginas/intronivel2.html'   // ← cambiá la ruta si tu Nivel 2 vive en otro lado
 };
 
 /* ---------------------- DOM ---------------------- */
