@@ -136,13 +136,23 @@ button:hover {
   font-size: 0.7rem;
   padding: 2px 4px;
 }
-
-.video-section .video-exp {
-  width: 360px !important;
-  height: auto !important;
+/* Asegurá que el contenedor no lo achique */
+.video-section{
+  width: auto !important;
   max-width: none !important;
-  display: block;
-  margin: 0 auto;      /* si querés centrar */
-  flex: 0 0 auto;      /* por si el contenedor es flex y lo achica */
+  display: block !important;
 }
 
+/* Forzá el tamaño del video y que no se encoja en flex/grid */
+.video-section .video-exp{
+  width: 360px !important;
+  min-width: 360px !important;
+  height: auto !important;
+  max-width: none !important;
+  flex: 0 0 auto !important;
+  display: block !important;
+  margin: 0 auto;              /* centrado opcional */
+  position: relative;          /* por si hay overlays */
+  z-index: 10;                 /* subí por si algo lo tapa */
+  pointer-events: auto;        /* asegúrate de poder clickear */
+}
