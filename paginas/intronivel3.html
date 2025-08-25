@@ -3,86 +3,72 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="icon" href="/img/favicon-32.png" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32.png">
-  <link rel="apple-touch-icon" href="/img/favicon-32.png">
-  <title>Nivel 3 — Satélites de Gatitos</title>
 
-  <!-- SOLO el CSS del nivel 3 -->
-  <link rel="stylesheet" href="../css/nivel3.css"/>
+  <!-- Favicons (mismo esquema que el nivel 2) -->
+  <link rel="icon" href="/brainrot-mutantes/img/favicon-32.png" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="/brainrot-mutantes/img/favicon-32.png">
+  <link rel="apple-touch-icon" href="/brainrot-mutantes/img/favicon-32.png">
+
+  <title>Satélites de Gatitos — Briefing Nivel 3</title>
+
+  <!-- CSS de intros unificado -->
+  <link rel="stylesheet" href="/brainrot-mutantes/css/intro.css">
 </head>
 <body>
-  <header class="topbar">
-    <h1>🛰️ Nivel 3 — Satélites de Gatitos</h1>
-    <p class="muted">
-      Meta: <strong id="plan-target">24</strong> pasos.
-      Progreso: <strong id="plan-now">0/24</strong>
-    </p>
-  </header>
+  <main class="panel" role="main">
+    <h1 id="title">Satélites de Gatitos — Briefing</h1>
 
-  <main class="layout">
-    <!-- Panel de bloques -->
-    <aside id="blocks-panel" class="panel panel--left">
-      <h2>Bloques</h2>
+    <!-- Imagen temática -->
+    <figure class="hero">
+      <!-- Cambiá el nombre si tu archivo difiere -->
+      <img
+        src="/brainrot-mutantes/img/satelites-gatitos.png"
+        alt="Satélites con forma de gatito orbitan un planeta violeta; una nave oxidada intenta sincronizarlos con destellos de energía."
+        width="1200" height="675"
+        loading="eager" decoding="async">
+      <figcaption>
+        Los satélites felinos deben emitir sus pulsos en perfecta alternancia para evitar una plaga de brain rots.
+      </figcaption>
+    </figure>
 
-      <!-- Loops fijos (dos tipos) -->
-      <div class="block loop" draggable="true" data-type="loop" data-n="6">
-        <span class="label">Ciclo 6×</span>
-      </div>
-      <div class="block loop" draggable="true" data-type="loop" data-n="4">
-        <span class="label">Ciclo 4×</span>
-      </div>
+    <p id="hello"></p>
 
-      <!-- Acciones -->
-      <div class="block simple sync" draggable="true" data-type="sync">
-        <span class="label">SYNC</span>
-      </div>
-      <div class="block simple beam" draggable="true" data-type="beam">
-        <span class="label">BEAM</span>
-      </div>
+    <section aria-labelledby="mission-title" class="mission">
+      <h2 id="mission-title">🎯 Misión</h2>
+      <p>
+        Los <strong>Satélites de Gatitos</strong> 🐱 están desfasados. Debés programar
+        una secuencia que los <strong>sincronice</strong> sin generar inestabilidades.
+      </p>
+      <ul>
+        <li>Usá <strong>exactamente 2 ciclos</strong>: uno de <strong>6×</strong> y otro de <strong>4×</strong>.</li>
+        <li>Cada ciclo debe incluir <strong>SYNC</strong> y <strong>BEAM</strong> (no se admiten ciclos vacíos).</li>
+        <li>Agregá <strong>al menos 1 acción suelta</strong> (SYNC o BEAM) fuera de los ciclos.</li>
+        <li>Mantené la <strong>alternancia global</strong> de acciones (no repitas la misma dos veces seguidas en la secuencia completa).</li>
+        <li>Balance final: <strong>SYNC = BEAM</strong>.</li>
+        <li>Objetivo total: <strong>24 pasos exactos</strong>.</li>
+      </ul>
 
-      <hr/>
-
-      <!-- Inventario visible (valores iniciales de stock) -->
-      <div class="stock">
-        <p>Loops: <strong id="count-loops">2</strong></p>
-        <p>SYNC: <strong id="count-sync">4</strong></p>
-        <p>BEAM: <strong id="count-beam">4</strong></p>
-      </div>
-
-      <!-- Velocidad -->
-      <label for="speed" class="muted">Velocidad (ms/step)</label>
-      <input id="speed" type="number" min="60" step="20" value="220" />
-    </aside>
-
-    <!-- Workspace (área de programación) -->
-    <section class="panel panel--center">
-      <h2>Programa</h2>
-      <div id="workspace" class="workspace" aria-label="Zona para armar la secuencia"></div>
-
-      <div class="actions">
-        <button id="btn-run" class="btn btn-primary">▶ Ejecutar</button>
-        <button id="btn-clear" class="btn">🧹 Limpiar</button>
-        <button id="btn-reset" class="btn">↺ Reiniciar</button>
-      </div>
+      <p>
+        ⚠ Desbalancear o romper la alternancia <em>satura</em> los satélites con brain rot.  
+        🏆 Si acertás, registramos la sincronización exitosa del <strong>Nivel 3</strong>.
+      </p>
     </section>
 
-    <!-- Tablero / feedback visual -->
-    <aside class="panel panel--right">
-      <h2>Constelación</h2>
-      <div id="board" class="board" aria-live="polite"></div>
-      <p class="muted small">
-        Reglas: 2 ciclos (uno 6× y otro 4×), cada ciclo debe incluir SYNC y BEAM, al menos 1 acción suelta fuera,
-        alternancia global, balance SYNC=BEAM y total = <strong id="targetX">24</strong>.
-      </p>
-    </aside>
+    <button id="start" type="button">🐾 Comenzar Nivel 3</button>
   </main>
 
-  <noscript>
-    <p style="text-align:center;color:#fff">Necesitás habilitar JavaScript para jugar este nivel.</p>
-  </noscript>
+  <script>
+    // Personaliza el saludo con el nombre guardado en el inicio
+    (function () {
+      const name = localStorage.getItem('playerName') || 'Recluta';
+      document.getElementById('title').textContent = `Satélites de Gatitos — Briefing para ${name}`;
+      document.getElementById('hello').textContent = `Listo, ${name}. Ajustá tus ciclos (6× y 4×), respetá la alternancia y alcanzá 24 pasos exactos.`;
 
-  <!-- JS del nivel: al final del body (sin defer) -->
-  <script src="../scripts/nivel3.js"></script>
+      document.getElementById('start').addEventListener('click', () => {
+        // Archivo del juego real del nivel 3
+        window.location.href = 'nivel3.html';
+      });
+    })();
+  </script>
 </body>
 </html>
