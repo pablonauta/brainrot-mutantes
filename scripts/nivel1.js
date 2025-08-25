@@ -468,13 +468,19 @@ function runProgram() {
   }
 
   // ✅ Éxito: esperamos a que termine la animación antes de alert + redirect
-  const animMs = msPerTurn() * total;
-  setTimeout(() => {
-    alert('🏆 ¡Exacto! Órbita de 20 lograda. Pasás al Nivel 2…');
-    try { localStorage.setItem('nivel1Complete', 'true'); } catch {}
-    // pequeño colchón para que el usuario perciba el final antes de saltar
-    setTimeout(() => { window.location.href = CONFIG.nextLevelUrl; }, 450);
-  }, Math.max(0, animMs + 120)); // +120ms de margen por seguridad
+const animMs = msPerTurn() * total;
+
+setTimeout(() => {
+  try { localStorage.setItem('nivel1Complete', 'true'); } catch {}
+
+  alert('🏆 ¡Exacto! Órbita de 20 lograda. Pasás al Nivel 2…');
+
+  // Resuelve bien si CONFIG.nextLevelUrl es relativa o absoluta
+  const next = new URL(CONFIG.nextLevelUrl, location.href).toString();
+
+  // pequeño colchón para que se vea el cierre y luego navegar
+  setTimeout(() => { window.location.href = next; }, 300);
+}, Math.max(0, animMs + 120));
 }
 
 /* ============================================================
