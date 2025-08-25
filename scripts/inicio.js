@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Guardar en localStorage
       localStorage.setItem("playerName", playerName);
       // Redirigir a la intro del nivel 1
-      window.location.href = "/paginas/intronivel1.html";
+      window.location.href = "intronivel1.html";
     } catch (err) {
       console.error("Error guardando nombre:", err);
       alert("Hubo un problema guardando tu nombre. Intenta de nuevo.");
