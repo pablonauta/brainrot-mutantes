@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Nivel 3 — Satélites de Gatitos</title>
+
+  <!-- SOLO el CSS del nivel 3 -->
   <link rel="stylesheet" href="../css/nivel3.css"/>
 </head>
 <body>
@@ -20,7 +22,7 @@
     <aside id="blocks-panel" class="panel panel--left">
       <h2>Bloques</h2>
 
-      <!-- Bucles fijos (dos tipos) -->
+      <!-- Loops fijos (dos tipos) -->
       <div class="block loop" draggable="true" data-type="loop" data-n="6">
         <span class="label">Ciclo 6×</span>
       </div>
@@ -37,17 +39,20 @@
       </div>
 
       <hr/>
+
+      <!-- Inventario visible (valores iniciales de stock) -->
       <div class="stock">
         <p>Loops: <strong id="count-loops">2</strong></p>
         <p>SYNC: <strong id="count-sync">4</strong></p>
         <p>BEAM: <strong id="count-beam">4</strong></p>
       </div>
 
+      <!-- Velocidad -->
       <label for="speed" class="muted">Velocidad (ms/step)</label>
       <input id="speed" type="number" min="60" step="20" value="220" />
     </aside>
 
-    <!-- Workspace -->
+    <!-- Workspace (área de programación) -->
     <section class="panel panel--center">
       <h2>Programa</h2>
       <div id="workspace" class="workspace" aria-label="Zona para armar la secuencia"></div>
@@ -59,7 +64,7 @@
       </div>
     </section>
 
-    <!-- Tablero -->
+    <!-- Tablero / feedback visual -->
     <aside class="panel panel--right">
       <h2>Constelación</h2>
       <div id="board" class="board" aria-live="polite"></div>
@@ -70,7 +75,11 @@
     </aside>
   </main>
 
-  <!-- JS al final (sin defer) -->
+  <noscript>
+    <p style="text-align:center;color:#fff">Necesitás habilitar JavaScript para jugar este nivel.</p>
+  </noscript>
+
+  <!-- JS del nivel: al final del body (sin defer) -->
   <script src="../scripts/nivel3.js"></script>
 </body>
 </html>

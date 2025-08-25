@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Briefing — Nivel 4 · Brain Rot 3×4×3</title>
+  <!-- Reutilizá tu intro.css global -->
+  <link rel="stylesheet" href="/css/intro.css">
+</head>
+<body>
+  <main class="panel" role="main" aria-labelledby="title">
+    <h1 id="title">Briefing — Brain Rot 3×4×3</h1>
+    <p id="hello" class="hello"></p>
+
+    <!-- Imagen temática (PNG en /img/) -->
+    <figure class="hero hero--contain">
+      <img
+        src="/img/nivel4-brief.png"
+        alt="Una nave espacial oxidada patrulla anillos con nodos brillando mientras un Brain Rot contiene la fuga de glitches."
+        width="1200" height="675"
+        loading="lazy" decoding="async">
+      <figcaption class="visually-hidden">
+        Ilustración del escenario del nivel 4.
+      </figcaption>
+    </figure>
+
+    <section class="mission" aria-labelledby="m-title">
+      <h2 id="m-title">🎯 Misión</h2>
+      <p>
+        El Brain Rot está a bordo, listo para purgar el ruido. Frente a vos hay
+        una constelación de <strong>anillos y nodos</strong>. Para sellar las fugas,
+        necesitás un <strong>patrón perfecto de 36 pasos</strong> usando
+        <strong>bucles anidados</strong>.
+      </p>
+
+      <ul>
+        <li>Disponés de <strong>dos ciclos fijos</strong>: uno ×3 y otro ×4 (en cualquier orden).</li>
+        <li>Debés <strong>anidar</strong> un ciclo dentro del otro: raíz → ciclo externo → ciclo interno.</li>
+        <li>El <strong>cuerpo del ciclo interno</strong> debe ser exactamente:
+          <code>ANTIROT → SELLAR → FOCO</code>.
+        </li>
+        <li>Cuando el patrón esté correcto, el tablero sellará todos los nodos y
+          el Brain Rot quedará bajo control. Si no… se ríe en 144p 😿.
+        </li>
+      </ul>
+    </section>
+
+    <button id="start" type="button" class="btn">🧠 Entrar al Nivel 4</button>
+  </main>
+
+  <script>
+    // Saludo con el nombre guardado en la pantalla de inicio
+    (function () {
+      const name = localStorage.getItem('playerName') || 'Recluta';
+      const title = document.getElementById('title');
+      const hello = document.getElementById('hello');
+      if (title) title.textContent = `Briefing — Brain Rot 3×4×3 para ${name}`;
+      if (hello) hello.textContent = `Bienvenido/a, ${name}. Prepará la mente: hoy mandan los bucles.`;
+      document.getElementById('start').addEventListener('click', () => {
+        // Ajustá la ruta si tu nivel vive en otra carpeta
+        window.location.href = '/paginas/nivel4.html';
+      });
+    })();
+  </script>
+</body>
+</html>

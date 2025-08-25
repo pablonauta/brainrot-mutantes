@@ -2,9 +2,10 @@
 
 /* ================== CONFIG ================== */
 const CONFIG = {
-  targetSteps: 36,               // 3 × 4 × (ANTIROT + SELLAR + FOCO)
+  targetSteps: 36,                 // 3 × 4 × (ANTIROT + SELLAR + FOCO)
   msPerStepDefault: 220,
-  allowedLoopSizes: [3, 4],      // par requerido {3,4} en cualquier orden
+  nextLevelUrl: '/paginas/final.html',
+  allowedLoopSizes: [3, 4],        // <- nombre correcto + valores correctos
 };
 
 /* ================== DOM ================== */
@@ -154,7 +155,6 @@ function createLoop(fixedN){
   const head = document.createElement('div');
   head.className = 'loop-head';
   head.innerHTML = `Repetir <span class="loop-n" aria-label="repeticiones">${fixedN}</span>×`;
-  // no editable (fijo)
 
   const dz = document.createElement('div');
   dz.className = 'dropzone';
@@ -234,7 +234,7 @@ function handleDropOnDropzone(dz, payload){
 
   if (type === T_LOOP){
     const n = payload.loopN ?? 3;
-    if (!CONFIG.allowedLoopSizes.includes(n)) return;
+    if (!CONFIG.allowedLoopSizes.includes(n)) return; // <-- nombre correcto
     const parentLoop = dz.closest('.block.loop');
     if (parentLoop && loopDepth(parentLoop) >= 1) return; // sólo 2 niveles
     if (inv.loops <= 0) return;
@@ -300,7 +300,7 @@ wsEl?.addEventListener('drop', e=>{
   if (type === T_LOOP){
     if (inv.loops <= 0) return;
     const n = payload.loopN ?? 3;
-    if (!CONFIG.allowedLoopSizes.includes(n)) return;
+    if (!CONFIG.allowedLoopSizes.includes(n)) return; // <-- nombre correcto
     wsEl.appendChild(createLoop(n)); inv.loops--; refreshInventory(); refreshPlan(); return;
   }
   if (type === T_ANTI){
@@ -356,8 +356,10 @@ function refreshPlan(){
   runBtn && (runBtn.disabled = prog.length === 0);
 }
 
-/* ========== Validación: requiere anidado, tamaños {3,4}, inner = [A,S,F] ========== */
-function multisetEq34(a, b){ return [a,b].sort().join(',') === CONFIG.allowedLoopSizes.slice().sort().join(','); }
+/* ========== Validación ========== */
+function multisetEq34(a, b){
+  return [a,b].sort().join(',') === CONFIG.allowedLoopSizes.slice().sort().join(',');
+}
 function checkConstraints(){
   const prog = readProgram(wsEl);
   const nested = findNested(prog);
@@ -382,27 +384,23 @@ function checkConstraints(){
 }
 
 /* ========== Simulación ========== */
-async function simulate(nested){
+async function simulate(){
   ensureBoard();
-  // Visualizamos siempre 3×4 (tema del nivel)
   const rows = 3, cols = 4;
   const stepMs = msPerStep();
 
   for (let r=0; r<rows; r++){
     for (let c=0; c<cols; c++){
-      // ANTIROT
       const a = cellEl(r,c);
-      a?.classList.add('synced'); // reusamos clase suave
+      a?.classList.add('synced');
       a?.querySelector('.icon') && (a.querySelector('.icon').textContent = '🌀');
       await sleep(stepMs * 0.5);
 
-      // SELLAR
       const s = cellEl(r,c);
-      s?.classList.add('beamed'); // otra capa
+      s?.classList.add('beamed');
       s?.querySelector('.icon') && (s.querySelector('.icon').textContent = '🔒');
       await sleep(stepMs * 0.5);
 
-      // FOCO
       const f = cellEl(r,c);
       f?.classList.add('focused');
       f?.querySelector('.icon') && (f.querySelector('.icon').textContent = '🎯');
@@ -424,10 +422,12 @@ async function runProgram(){
     await sleep(100);
     alert(`🧠 Patrón incorrecto.\n\n• ${check.msg}\n• Pista: loops {3,4} y, adentro, [ANTIROT, SELLAR, FOCO].`);
   } else {
-    await simulate(check.nested);
+    await simulate();
     showToast('🏆 Brain Rot purgado: patrón 3×4×3 perfecto.', true);
     try { localStorage.setItem('nivel4Complete','true'); } catch {}
+    setTimeout(()=> window.location.href = CONFIG.nextLevelUrl, 1200);
   }
+
   running = false; runBtn && (runBtn.disabled = false);
 }
 runBtn?.addEventListener('click', runProgram);

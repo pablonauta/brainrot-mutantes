@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Loop or Perish — Epílogo</title>
+  <link rel="stylesheet" href="/css/intro.css" />
+</head>
+<body>
+  <main class="panel" role="main">
+    <h1 id="title">¡Misión cumplida!</h1>
+
+    <!-- Imagen final reutilizando el componente “hero” de las intros -->
+    <figure class="hero hero--cover">
+      <img
+        src="/img/final.png"
+        alt="Una nave espacial oxidada con un Brain Rot en la cabina saluda; detrás, el planeta-meme encapsulado y la galaxia limpia de memes corruptos."
+        width="1200" height="675"
+        loading="eager" decoding="async">
+      <figcaption>
+        Universo estabilizado: los memes corruptos quedan confinados en su órbita. 🎉
+      </figcaption>
+    </figure>
+
+    <section class="mission" aria-live="polite">
+      <h2>Informe de cierre</h2>
+      <p id="hello"></p>
+      <p>
+        Tu secuencia de bucles, sincronías y focos fue tan precisa que los Brain Rot
+        se marearon con sus propias reglas. El planeta-meme fue sellado, los stickers
+        dejaron de escapar al hiperespacio y el algoritmo cósmico volvió a recomendar
+        videos de gatitos en 4K (como debe ser).
+      </p>
+      <ul>
+        <li>🛰️ Órbitas estabilizadas.</li>
+        <li>🧠 Brain Rot en pausa controlada.</li>
+        <li>🐱 Gatos transmitidos sin compresión de 144p.</li>
+        <li>🌌 Universo protegido (por ahora 😏).</li>
+      </ul>
+      <p><strong>Felicitaciones</strong>: completaste todos los niveles de <em>Loop or Perish</em>.</p>
+    </section>
+
+    <button id="btn-home">⬅ Volver al inicio</button>
+  </main>
+
+  <script>
+    // Personalización con el nombre guardado
+    const name = localStorage.getItem('playerName') || 'Recluta';
+    document.getElementById('title').textContent = `¡Misión cumplida, ${name}!`;
+    document.getElementById('hello').textContent =
+      `${name}, lograste la hazaña: la constelación gatuna aplaude y la flota de naves oxidadas te debe una.`;
+
+    // Volver al inicio (cambiá la URL si tu inicio vive en otro lado)
+    const HOME_URL = '/index.html';
+    document.getElementById('btn-home').addEventListener('click', () => {
+      window.location.assign(HOME_URL);
+    });
+  </script>
+</body>
+</html>

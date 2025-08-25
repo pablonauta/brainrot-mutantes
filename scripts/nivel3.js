@@ -1,58 +1,60 @@
-/***** NIVEL 3 — SYNC/BEAM (24 pasos), DnD robusto, alternancia y balance, validación por aporte, board de satélites *****/
+/***** NIVEL 3 — SYNC/BEAM (24 pasos), bucles fijos 6× y 4× *****/
 
-/* ---------------- CONFIG ---------------- */
 const CONFIG = {
   targetSteps: 24,
-  // Pocas acciones sueltas para “forzar” usar ciclos
   inventoryDefaults: { loops: 2, syncs: 4, beams: 4 },
   msPerStepDefault: 220,
-  nextLevelUrl: '/nivel4.html' // opcional
+  nextLevelUrl: '/paginas/intronivel4.html',
 };
 
-/* -------------- Helpers UI -------------- */
+const T_LOOP='loop', T_SYNC='sync', T_BEAM='beam';
+
+/* ===== Helpers ===== */
+const $ =(s,r=document)=>r.querySelector(s);
+const $$=(s,r=document)=>[...r.querySelectorAll(s)];
 const sleep = (ms)=>new Promise(r=>setTimeout(r,ms));
-function showToast(msg, type='info', ms=1800){
-  const t = document.createElement('div');
-  t.className = 'toast '+(type==='success'?'toast--success':'');
-  t.textContent = msg; document.body.appendChild(t);
-  requestAnimationFrame(()=> t.classList.add('is-visible'));
-  setTimeout(()=>{ t.classList.remove('is-visible'); setTimeout(()=>t.remove(),220); }, ms);
+function msPerStep(){ const v=parseInt($('#speed')?.value||'',10); return Number.isNaN(v)?CONFIG.msPerStepDefault:Math.max(60,v); }
+function showToast(msg, ok=false){
+  const t=document.createElement('div'); t.className='toast'+(ok?' toast--success':''); t.textContent=msg;
+  document.body.appendChild(t); requestAnimationFrame(()=>t.classList.add('is-visible'));
+  setTimeout(()=>{ t.classList.remove('is-visible'); setTimeout(()=>t.remove(),220); }, 1600);
 }
-const absurdos = [
-  "🛰️ El satélite se puso a mirar su propia antena. No hay gatos para nadie.",
-  "🛰️ El operador dijo «sync» y el satélite entendió «siesta».",
-  "🛰️ Tu coreografía orbital activó el Modo Gato Invisible.",
-  "🛰️ La Tierra pidió replay… pero no hay señal. 🐱❌"
-];
+function setPanelToken(e, type, n){
+  try{ e.dataTransfer.setData('text/plain', n?`panel:${type}:${n}`:`panel:${type}`); }catch{}
+  e.dataTransfer.effectAllowed='copy';
+}
+function parseToken(str){
+  const [from,type,maybeN] = String(str||'').split(':');
+  return { from, type, n: maybeN?parseInt(maybeN,10):undefined };
+}
 
-/* ---------------- DOM ---------------- */
-const wsEl = document.getElementById('workspace');
-const runBtn = document.getElementById('btn-run');
-const clearBtn = document.getElementById('btn-clear');
-const resetBtn = document.getElementById('btn-reset');
-const speedInput = document.getElementById('speed');
+/* ===== DOM ===== */
+const wsEl   = $('#workspace');
+const panelEl= $('#blocks-panel');
+const boardEl= $('#board');
 
-const countSyncEl = document.getElementById('count-sync');
-const countBeamEl = document.getElementById('count-beam');
-const countLoopsEl = document.getElementById('count-loops');
-const planNowEl = document.getElementById('plan-now');
-const planTargetEl = document.getElementById('plan-target');
-const targetXEl = document.getElementById('targetX');
+const runBtn   = $('#btn-run');
+const clearBtn = $('#btn-clear');
+const resetBtn = $('#btn-reset');
 
-const panelEl = document.getElementById('blocks-panel');
-const boardEl = document.getElementById('board');
+const countLoopsEl = $('#count-loops');
+const countSyncEl  = $('#count-sync');
+const countBeamEl  = $('#count-beam');
+const planNowEl    = $('#plan-now');
+const planTargetEl = $('#plan-target');
+const targetXEl    = $('#targetX');
 
-/* -------------- Inventario -------------- */
+/* ===== Inventario ===== */
 let inv = {
-  loops: parseInt(countLoopsEl?.textContent || '', 10),
-  syncs: parseInt(countSyncEl?.textContent || '', 10),
-  beams: parseInt(countBeamEl?.textContent || '', 10),
+  loops: parseInt(countLoopsEl?.textContent||'',10),
+  syncs: parseInt(countSyncEl ?.textContent||'',10),
+  beams: parseInt(countBeamEl ?.textContent||'',10),
 };
 if (Number.isNaN(inv.loops)) inv.loops = CONFIG.inventoryDefaults.loops;
 if (Number.isNaN(inv.syncs)) inv.syncs = CONFIG.inventoryDefaults.syncs;
 if (Number.isNaN(inv.beams)) inv.beams = CONFIG.inventoryDefaults.beams;
 
-/* -------------- Board (satélites) -------------- */
+/* ===== Tablero ===== */
 function ensureBoard(){
   if (!boardEl) return null;
   if (!boardEl.querySelector('.constellation')){
@@ -76,318 +78,373 @@ function ensureBoard(){
 }
 ensureBoard();
 
-function msPerStep(){
-  const v=parseInt(speedInput?.value||'',10);
-  return Number.isNaN(v) ? CONFIG.msPerStepDefault : Math.max(60,v);
-}
-
-/* -------------- Tipos y helpers de programa -------------- */
-const T_LOOP='loop', T_SYNC='sync', T_BEAM='beam';
-
-const rootChildren = ()=>[...wsEl.children];
-const rootLoops = ()=>rootChildren().filter(el => (el.dataset?.type||'')===T_LOOP);
-const rootActions = ()=>[...wsEl.querySelectorAll('[data-type="sync"],[data-type="beam"]')].filter(el=>!el.closest('.block.loop'));
+/* ===== Programa (lectura y validación) ===== */
 const loopDrop = (loopEl)=> loopEl.querySelector('.dropzone');
+function rootLoops(){ return [...wsEl.children].filter(el=>el.dataset?.type===T_LOOP); }
+function rootSingles(){ return $$('#workspace > .root-rail [data-type="sync"], #workspace > .root-rail [data-type="beam"]'); }
 
-function flattenProgram(){
-  const out = [];
-  rootActions().forEach(a=> out.push(a.dataset.type));
+function flattenSequence(){
+  const seq=[];
+  rootSingles().forEach(a=> seq.push(a.dataset.type));
   rootLoops().forEach(loop=>{
     const reps = parseInt(loop.querySelector('.loop-n')?.textContent||'0',10) || 0;
     const inside = [...loopDrop(loop).querySelectorAll('[data-type="sync"],[data-type="beam"]')].map(n=>n.dataset.type);
-    for(let i=0;i<reps;i++) out.push(...inside);
+    for(let i=0;i<reps;i++) seq.push(...inside);
   });
-  return out;
+  return seq;
 }
-const countOf = (arr,t) => arr.filter(x=>x===t).length;
+const countOf=(arr,t)=>arr.filter(x=>x===t).length;
 
-/* -------------- Validaciones -------------- */
 function checkConstraints(){
-  const errors = [];
-  const loops = rootLoops();
-  const seq = flattenProgram();
+  const errors=[];
+  const loops=rootLoops();
+  const seq=flattenSequence();
 
-  // 2 loops exactos
-  if (loops.length !== 2) errors.push(`Debés usar exactamente 2 ciclos (tenés ${loops.length}).`);
+  if (loops.length!==2) errors.push(`Debés usar exactamente 2 ciclos (tenés ${loops.length}).`);
+  const ns = loops.map(l=>parseInt(l.querySelector('.loop-n')?.textContent||'0',10)||0).sort((a,b)=>a-b);
+  if (!(ns.length===2 && ns[0]===4 && ns[1]===6)) errors.push('Los ciclos deben ser exactamente uno de 6× y otro de 4×.');
 
-  // Cada loop debe tener SYNC y BEAM dentro
-  let empties=0;
-  const contribs=[];
+  let empties=0; const contribs=[];
   loops.forEach(l=>{
-    const reps=parseInt(l.querySelector('.loop-n')?.textContent||'0',10)||0;
-    const insideEls = loopDrop(l)?.querySelectorAll('[data-type="sync"],[data-type="beam"]') || [];
+    const reps = parseInt(l.querySelector('.loop-n')?.textContent||'0',10)||0;
+    const insideEls = loopDrop(l)?.querySelectorAll('[data-type="sync"],[data-type="beam"]')||[];
     const inside = [...insideEls].map(n=>n.dataset.type);
     if (inside.length===0) empties++;
-    if (!inside.includes(T_SYNC) || !inside.includes(T_BEAM)){
-      errors.push('Cada ciclo debe incluir al menos 1 SYNC y 1 BEAM.');
-    }
+    if (!inside.includes(T_SYNC) || !inside.includes(T_BEAM)) errors.push('Cada ciclo debe incluir al menos 1 SYNC y 1 BEAM.');
     contribs.push(reps * inside.length);
   });
   if (empties>0) errors.push(`⚠ Hay ${empties} ciclo(s) vacío(s).`);
+  if (contribs.length===2 && contribs[0]===contribs[1]) errors.push(`Los dos ciclos no pueden sumar lo mismo (ahora: ${contribs[0]} y ${contribs[1]}).`);
 
-  // Aportes distintos
-  if (contribs.length===2 && contribs[0]===contribs[1]){
-    errors.push(`Los dos ciclos no pueden sumar lo mismo (ahora: ${contribs[0]} y ${contribs[1]}).`);
+  if (rootSingles().length<1) errors.push('Necesitás al menos 1 acción fuera de los ciclos.');
+
+  for (let i=1;i<seq.length;i++){
+    if (seq[i]===seq[i-1]){ errors.push('La secuencia debe alternar SYNC/BEAM.'); break; }
   }
+  const cS=countOf(seq,T_SYNC), cB=countOf(seq,T_BEAM);
+  if (cS!==cB) errors.push(`Secuencia desbalanceada: SYNC=${cS} vs BEAM=${cB}.`);
+  if (seq.length!==CONFIG.targetSteps) errors.push(`Total actual: ${seq.length}. El objetivo es ${CONFIG.targetSteps}.`);
 
-  // Al menos 1 acción fuera de ciclos
-  if (rootActions().length < 1) errors.push('Necesitás al menos 1 acción fuera de los ciclos.');
-
-  // Alternancia
-  for(let i=1;i<seq.length;i++){
-    if (seq[i]===seq[i-1]){
-      errors.push('La secuencia debe alternar SYNC/BEAM (no repitas dos iguales seguidas).');
-      break;
-    }
-  }
-
-  // Balance
-  if (countOf(seq,T_SYNC) !== countOf(seq,T_BEAM)){
-    errors.push(`Secuencia desbalanceada: SYNC=${countOf(seq,T_SYNC)} vs BEAM=${countOf(seq,T_BEAM)}.`);
-  }
-
-  // Total
-  if (seq.length !== CONFIG.targetSteps){
-    errors.push(`Total actual: ${seq.length}. El objetivo es ${CONFIG.targetSteps}.`);
-  }
-
-  return { errors, seq, contribs };
+  return { errors, seq };
 }
 
-/* -------------- UI plan & stock -------------- */
+/* ===== UI plan/stock ===== */
 function refreshPlanAndRunButton(){
-  const n = flattenProgram().length;
+  const n=flattenSequence().length;
   planNowEl && (planNowEl.textContent = `${n}/${CONFIG.targetSteps}`);
-  const hasSomething = rootLoops().length>0 || rootActions().length>0;
-  runBtn && (runBtn.disabled = !hasSomething);
+  runBtn && (runBtn.disabled = (rootLoops().length===0 && rootSingles().length===0));
 }
 function refreshInventoryUI(){
   countLoopsEl && (countLoopsEl.textContent = String(inv.loops));
   countSyncEl && (countSyncEl.textContent = String(inv.syncs));
   countBeamEl && (countBeamEl.textContent = String(inv.beams));
-  panelEl?.querySelector('.block.loop')?.classList.toggle('disabled', inv.loops<=0 || rootLoops().length>=2);
+  const noMoreLoops = inv.loops<=0 || rootLoops().length>=2;
+  panelEl?.querySelectorAll('.block.loop').forEach(el=> el.classList.toggle('disabled', noMoreLoops));
   panelEl?.querySelector('.block.simple.sync')?.classList.toggle('disabled', inv.syncs<=0);
   panelEl?.querySelector('.block.simple.beam')?.classList.toggle('disabled', inv.beams<=0);
 }
 
-/* -------------- Crear bloques -------------- */
-function miniButton(txt,title,cb){
+/* ===== Fábricas + drag de colocados ===== */
+let dragEl = null;
+
+function makeMiniButton(txt,title,cb){
   const b=document.createElement('button'); b.className='btn-mini btn-remove';
   b.type='button'; b.title=title; b.textContent=txt; b.addEventListener('click',cb); return b;
 }
+function makePlacedDraggable(el){
+  if (el.dataset.movable) return;
+  el.dataset.movable='1';
+  el.setAttribute('draggable','true');
+  el.addEventListener('dragstart', e=>{
+    dragEl = el;
+    const n = el.dataset.type===T_LOOP ? (el.dataset.n || '') : '';
+    try{ e.dataTransfer.setData('text/plain', `ws:${el.dataset.type}:${n}`); }catch{}
+    e.dataTransfer.effectAllowed='move';
+  });
+  el.addEventListener('dragend', ()=>{ dragEl=null; });
+}
+
 function createSimple(type,labelClass,text){
   const item=document.createElement('div');
   item.className=`block simple ${labelClass} placed`; item.dataset.type=type;
   const label=document.createElement('span'); label.className='label'; label.textContent=text;
   const ctrl=document.createElement('div'); ctrl.className='controls';
-  ctrl.append(miniButton('✖','Eliminar',()=>{ item.remove();
+  ctrl.append(makeMiniButton('✖','Eliminar',()=>{ item.remove();
     if (type===T_SYNC) inv.syncs++; else inv.beams++;
     refreshInventoryUI(); refreshPlanAndRunButton();
   }));
-  item.append(label,ctrl); return item;
+  item.append(label,ctrl);
+  makePlacedDraggable(item);
+  return item;
 }
 const createSyncBlock = ()=> createSimple(T_SYNC,'sync','SYNC');
 const createBeamBlock = ()=> createSimple(T_BEAM,'beam','BEAM');
 
-function createLoopBlock(){
+function createLoopBlock(fixedN){
   const loop=document.createElement('div'); loop.className='block loop placed'; loop.dataset.type=T_LOOP;
+  loop.dataset.n = String(fixedN); // 🔧 conservar N del bucle
+
   const head=document.createElement('div'); head.className='loop-head';
-  head.append('Repetir ');
-  const nEl=document.createElement('span'); nEl.className='loop-n'; nEl.textContent='3'; nEl.title='Click para cambiar (1–20)';
-  head.append(nEl,'×');
-  head.addEventListener('click',e=>{
-    const t=e.target.closest('.loop-n'); if(!t) return;
-    const val=parseInt(prompt('Repeticiones (1–20):',t.textContent)||t.textContent,10);
-    const nn=Math.min(20,Math.max(1,isNaN(val)?1:val)); t.textContent=String(nn); refreshPlanAndRunButton();
-  });
+  const nEl=document.createElement('span'); nEl.className='loop-n'; nEl.textContent=String(fixedN);
+  head.append('Repetir ', nEl, '×');
+
   const dz=document.createElement('div'); dz.className='dropzone';
-  wireInnerDropzone(dz); wireLoopContainer(loop);
-  const btnX=miniButton('✖','Eliminar ciclo',()=>{
-    const inside=dz.querySelectorAll('[data-type="sync"],[data-type="beam"]').length;
-    // devolvemos unidades según tipos
+  wireDropzone(dz,false); // interna
+
+  const btnX=makeMiniButton('✖','Eliminar ciclo',()=>{
     dz.querySelectorAll('[data-type="sync"]').forEach(()=>inv.syncs++);
     dz.querySelectorAll('[data-type="beam"]').forEach(()=>inv.beams++);
     loop.remove(); inv.loops++; refreshInventoryUI(); refreshPlanAndRunButton();
   });
-  loop.append(head,dz,btnX); return loop;
+
+  loop.append(head,dz,btnX);
+  makePlacedDraggable(loop);
+  return loop;
 }
 
-/* -------------- Rieles root (suelto) -------------- */
+/* ===== Rieles en root ===== */
 function ensureRootRails(){
-  if(!wsEl) return;
-  if(!wsEl.querySelector('.root-rail[data-rail="top"]')){
+  if (!wsEl) return;
+  if (!wsEl.querySelector('.root-rail[data-rail="top"]')){
     const top=document.createElement('div'); top.className='dropzone root-rail'; top.dataset.rail='top';
-    top.innerHTML='<div class="rail-hint">Soltá SYNC/BEAM sueltos aquí</div>'; wsEl.insertBefore(top,wsEl.firstChild);
-    wireRootRail(top);
+    top.innerHTML='<div class="rail-hint">Soltá SYNC/BEAM sueltos aquí</div>';
+    wsEl.insertBefore(top, wsEl.firstChild); wireDropzone(top,true);
   }
-  if(!wsEl.querySelector('.root-rail[data-rail="bottom"]')){
+  if (!wsEl.querySelector('.root-rail[data-rail="bottom"]')){
     const bot=document.createElement('div'); bot.className='dropzone root-rail'; bot.dataset.rail='bottom';
-    bot.innerHTML='<div class="rail-hint">…o acá abajo</div>'; wsEl.appendChild(bot); wireRootRail(bot);
+    bot.innerHTML='<div class="rail-hint">…o acá abajo</div>';
+    wsEl.appendChild(bot); wireDropzone(bot,true);
   }
-}
-function wireRootRail(rail){
-  if(!rail || rail.dataset.wired) return; rail.dataset.wired='1';
-  rail.addEventListener('dragover',e=>{e.preventDefault();e.stopPropagation();});
-  rail.addEventListener('drop',e=>{
-    e.preventDefault();e.stopPropagation();
-    let p={}; try{p=JSON.parse(e.dataTransfer.getData('application/json')||'{}');}catch{}
-    const {from,type}=p||{}; if(from!=='panel') return;
-    if(type===T_SYNC && inv.syncs>0){ rail.appendChild(createSyncBlock()); inv.syncs--; }
-    else if(type===T_BEAM && inv.beams>0){ rail.appendChild(createBeamBlock()); inv.beams--; }
-    refreshInventoryUI(); refreshPlanAndRunButton();
-  });
 }
 
-/* -------------- Drag & Drop -------------- */
-function setPayload(e,obj){
-  try{e.dataTransfer.setData('application/json',JSON.stringify(obj));}catch{}
-  try{e.dataTransfer.setData('text/plain',obj.type||'');}catch{}
-}
-function wirePanelDrag(){
-  if(!panelEl) return;
+/* ===== DnD: panel ===== */
+function wirePanel(){
+  if (!panelEl) return;
   panelEl.querySelectorAll('.block[draggable="true"]').forEach(b=>{
-    if(b.dataset.wired) return; b.dataset.wired='1';
-    b.addEventListener('dragstart',e=>{
-      const type=(b.dataset.type||''); 
-      if([T_LOOP,T_SYNC,T_BEAM].indexOf(type)<0){ e.preventDefault(); return; }
-      if(type===T_LOOP && inv.loops<=0){ e.preventDefault(); return; }
-      if(type===T_SYNC && inv.syncs<=0){ e.preventDefault(); return; }
-      if(type===T_BEAM && inv.beams<=0){ e.preventDefault(); return; }
-      setPayload(e,{from:'panel',type}); e.dataTransfer.effectAllowed='copy';
+    if (b.dataset.wired) return;
+    b.dataset.wired = '1';
+    b.addEventListener('dragstart', (e)=>{
+      const el = e.currentTarget;
+      const type = el.dataset.type;
+      if ([T_LOOP,T_SYNC,T_BEAM].indexOf(type)<0){ e.preventDefault(); return; }
+
+      if (type===T_LOOP){
+        if (inv.loops<=0 || rootLoops().length>=2){ e.preventDefault(); return; }
+        const n = parseInt(el.getAttribute('data-n'),10);
+        if (n!==6 && n!==4){ e.preventDefault(); return; }
+        setPanelToken(e, T_LOOP, n);
+      } else if (type===T_SYNC){
+        if (inv.syncs<=0){ e.preventDefault(); return; }
+        setPanelToken(e, T_SYNC);
+      } else if (type===T_BEAM){
+        if (inv.beams<=0){ e.preventDefault(); return; }
+        setPanelToken(e, T_BEAM);
+      }
     });
   });
 }
-wirePanelDrag();
+wirePanel();
 
-function isInnerZone(target){ const dz=target.closest('.dropzone'); return !!dz && !dz.classList.contains('root-drop'); }
-function beforeRailBottomOrEnd(node){
-  const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
-  if (railBottom) wsEl.insertBefore(node, railBottom); else wsEl.appendChild(node);
+/* ===== DnD: dropzones (rieles + internas) ===== */
+function wireDropzone(dz, isRail){
+  if (!dz || dz.dataset.wired) return; dz.dataset.wired='1';
+
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); dz.classList.add('is-hover'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('is-hover'));
+  dz.addEventListener('dragenter', ()=>{ try{ dz.scrollIntoView({block:'nearest', inline:'nearest', behavior:'smooth'});}catch{} });
+
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('is-hover');
+
+    const tok = parseToken(e.dataTransfer.getData('text/plain'));
+    const { from, type, n } = tok;
+
+    // mover ya colocado (desde workspace)
+    if (from==='ws' && dragEl){
+      if (isRail){
+        if (dragEl.dataset.type===T_LOOP){
+          const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
+          wsEl.insertBefore(dragEl, railBottom);
+        } else {
+          dz.appendChild(dragEl);
+        }
+      } else {
+        if (dragEl.dataset.type===T_SYNC || dragEl.dataset.type===T_BEAM) dz.appendChild(dragEl);
+      }
+      dragEl=null; refreshPlanAndRunButton(); return;
+    }
+
+    // crear desde panel
+    if (from!=='panel') return;
+
+    if (type===T_LOOP){
+      if (!isRail) return; // los loops no van dentro de dropzones internas
+      if (inv.loops<=0 || rootLoops().length>=2) return;
+      if (n!==6 && n!==4) return;
+      const loop = createLoopBlock(n);
+      const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
+      wsEl.insertBefore(loop, railBottom);
+      inv.loops--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
+
+    if (type===T_SYNC && inv.syncs>0){
+      dz.appendChild(createSyncBlock()); inv.syncs--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
+    if (type===T_BEAM && inv.beams>0){
+      dz.appendChild(createBeamBlock()); inv.beams--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
+  });
 }
 
-wsEl.addEventListener('dragover',e=>{ if(isInnerZone(e.target)) return; e.preventDefault(); e.stopPropagation(); });
-wsEl.addEventListener('drop',e=>{
-  if(isInnerZone(e.target)) return; e.preventDefault(); e.stopPropagation();
-  let p={}; try{p=JSON.parse(e.dataTransfer.getData('application/json')||'{}');}catch{}
-  const {from,type}=p||{}; if(from!=='panel') return;
+/* ===== Workspace (fallback al soltar “al vacío”) ===== */
+wsEl.addEventListener('dragover', e=>{ e.preventDefault(); e.stopPropagation(); });
+wsEl.addEventListener('drop', e=>{
+  e.preventDefault(); e.stopPropagation();
+  const tok = parseToken(e.dataTransfer.getData('text/plain'));
+  const { from, type, n } = tok;
 
-  if(type===T_LOOP){
-    if(inv.loops<=0 || rootLoops().length>=2) return;
-    const loop=createLoopBlock();
-    const overLoop=e.target.closest('.block.loop');
-    if(overLoop){
-      const r=overLoop.getBoundingClientRect(); const after=(e.clientY>r.top+r.height/2);
-      wsEl.insertBefore(loop, after?overLoop.nextSibling:overLoop);
-    }else beforeRailBottomOrEnd(loop);
-    inv.loops--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+  if (from==='ws' && dragEl){
+    if (dragEl.dataset.type===T_LOOP){
+      const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
+      wsEl.insertBefore(dragEl, railBottom);
+    } else {
+      const railTop = wsEl.querySelector('.root-rail[data-rail="top"]');
+      (railTop || wsEl).appendChild(dragEl);
+    }
+    dragEl=null; refreshPlanAndRunButton(); return;
   }
-  if(type===T_SYNC && inv.syncs>0){
-    beforeRailBottomOrEnd(createSyncBlock()); inv.syncs--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
-  }
-  if(type===T_BEAM && inv.beams>0){
-    beforeRailBottomOrEnd(createBeamBlock()); inv.beams--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+
+  if (from==='panel'){
+    if (type===T_LOOP){
+      if (inv.loops<=0 || rootLoops().length>=2) return;
+      if (n!==6 && n!==4) return;
+      const loop=createLoopBlock(n);
+      const railBottom = wsEl.querySelector('.root-rail[data-rail="bottom"]');
+      wsEl.insertBefore(loop, railBottom);
+      inv.loops--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
+    if (type===T_SYNC){
+      if (inv.syncs<=0) return;
+      const railTop = wsEl.querySelector('.root-rail[data-rail="top"]');
+      (railTop || wsEl).appendChild(createSyncBlock());
+      inv.syncs--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
+    if (type===T_BEAM){
+      if (inv.beams<=0) return;
+      const railTop = wsEl.querySelector('.root-rail[data-rail="top"]');
+      (railTop || wsEl).appendChild(createBeamBlock());
+      inv.beams--; refreshInventoryUI(); refreshPlanAndRunButton(); return;
+    }
   }
 });
 
-function wireInnerDropzone(dz){
-  if(!dz || dz.dataset.wired) return; dz.dataset.wired='1';
-  dz.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); });
-  dz.addEventListener('drop',e=>{
-    e.preventDefault(); e.stopPropagation();
-    let p={}; try{p=JSON.parse(e.dataTransfer.getData('application/json')||'{}');}catch{}
-    const {from,type}=p||{}; if(from!=='panel') return;
-    if(type===T_SYNC && inv.syncs>0){ dz.appendChild(createSyncBlock()); inv.syncs--; }
-    else if(type===T_BEAM && inv.beams>0){ dz.appendChild(createBeamBlock()); inv.beams--; }
-    refreshInventoryUI(); refreshPlanAndRunButton();
-  });
-}
-function wireLoopContainer(loop){
-  if(!loop || loop.dataset.loopWired) return; loop.dataset.loopWired='1';
-  loop.addEventListener('dragover',e=>{ e.preventDefault(); });
-  loop.addEventListener('drop',e=>{
-    let p={}; try{p=JSON.parse(e.dataTransfer.getData('application/json')||'{}');}catch{}
-    const {from,type}=p||{}; if(from!=='panel') return;
-    e.preventDefault(); e.stopPropagation();
-    const dz=loopDrop(loop); if(!dz) return;
-    if(type===T_SYNC && inv.syncs>0){ dz.appendChild(createSyncBlock()); inv.syncs--; }
-    else if(type===T_BEAM && inv.beams>0){ dz.appendChild(createBeamBlock()); inv.beams--; }
-    refreshInventoryUI(); refreshPlanAndRunButton();
-  });
-}
-wsEl.querySelectorAll('.block.loop').forEach(loop=>{ wireInnerDropzone(loopDrop(loop)); wireLoopContainer(loop); });
-
-/* -------------- Simulación -------------- */
+/* ===== Simulación ===== */
 function simulateSequence(seq){
   return new Promise(async (resolve)=>{
-    const {satA,satB,wave,progress} = ensureBoard();
-    const stepMs = msPerStep();
-    progress.style.width = '0%';
-    for(let i=0;i<seq.length;i++){
-      const t = seq[i];
-      // feedback visual
-      if (t===T_SYNC){
-        satA.classList.add('synced'); satB.classList.add('synced');
-        setTimeout(()=>{satA.classList.remove('synced'); satB.classList.remove('synced');}, Math.min(220,stepMs));
-      } else { // BEAM
-        wave.classList.remove('beam'); // reinicia anim
-        // force reflow
-        void wave.offsetWidth;
-        wave.classList.add('beam');
+    const {satA,satB,wave,progress}=ensureBoard();
+    const stepMs=msPerStep(); if (progress) progress.style.width='0%';
+    for (let i=0;i<seq.length;i++){
+      if (seq[i]===T_SYNC){
+        satA?.classList.add('synced'); satB?.classList.add('synced');
+        setTimeout(()=>{ satA?.classList.remove('synced'); satB?.classList.remove('synced'); }, Math.min(220,stepMs));
+      } else {
+        wave?.classList.remove('beam'); void wave?.offsetWidth; wave?.classList.add('beam');
       }
-      progress.style.width = `${Math.round(((i+1)/seq.length)*100)}%`;
+      if (progress) progress.style.width=`${Math.round(((i+1)/seq.length)*100)}%`;
       await sleep(stepMs);
     }
     resolve();
   });
 }
 
-/* -------------- RUN -------------- */
+/* ===== Botones ===== */
 let running=false;
 async function runProgram(){
-  if(running) return; running=true; runBtn && (runBtn.disabled=true);
-
-  const {errors, seq} = checkConstraints();
-
-  // simulá lo que haya (aunque esté mal) para feedback inmediato
+  if (running) return; running=true; runBtn && (runBtn.disabled=true);
+  const {errors, seq}=checkConstraints();
   if (seq.length>0) await simulateSequence(seq);
-
   if (errors.length){
-    alert(`${absurdos[Math.floor(Math.random()*absurdos.length)]}\n\n• ${errors.join('\n• ')}`);
-  }else{
-    showToast('🏆 ¡Satélites sincronizados! Los gatitos llegan en 4K.', 'success', 1700);
+    alert('🛰️ Error de patrón\n\n• '+errors.join('\n• '));
+  } else {
+    showToast('🏆 ¡Satélites sincronizados! Los gatitos llegan en 4K.', true);
     try{ localStorage.setItem('nivel3Complete','true'); }catch{}
-    if (CONFIG.nextLevelUrl) setTimeout(()=> window.location.assign(CONFIG.nextLevelUrl), 500);
+    if (CONFIG.nextLevelUrl) setTimeout(()=>location.assign(CONFIG.nextLevelUrl),500);
   }
-
   running=false; runBtn && (runBtn.disabled=false);
 }
-
-/* -------------- Botonera -------------- */
 runBtn?.addEventListener('click', runProgram);
+
 clearBtn?.addEventListener('click', ()=>{
-  rootActions().forEach(a=>{
-    if (a.dataset.type===T_SYNC) inv.syncs++; else inv.beams++;
-    a.remove();
-  });
-  rootLoops().forEach(loop=>{
-    loop.querySelectorAll('[data-type="sync"]').forEach(()=>inv.syncs++);
-    loop.querySelectorAll('[data-type="beam"]').forEach(()=>inv.beams++);
-    loop.remove(); inv.loops++;
-  });
+  $$('#workspace [data-type="sync"]').forEach(()=>inv.syncs++);
+  $$('#workspace [data-type="beam"]').forEach(()=>inv.beams++);
+  $$('#workspace .block.placed').forEach(el=>el.remove());
+  inv.loops = CONFIG.inventoryDefaults.loops;
   refreshInventoryUI(); refreshPlanAndRunButton();
-  const {progress} = ensureBoard(); if (progress) progress.style.width='0%';
+  const {progress}=ensureBoard(); if (progress) progress.style.width='0%';
 });
 resetBtn?.addEventListener('click', ()=>{
-  rootActions().forEach(a=>a.remove());
-  rootLoops().forEach(loop=>loop.remove());
+  $$('#workspace .block.placed').forEach(el=>el.remove());
   inv = { ...CONFIG.inventoryDefaults };
   refreshInventoryUI(); refreshPlanAndRunButton();
-  const {progress} = ensureBoard(); if (progress) progress.style.width='0%';
+  const {progress}=ensureBoard(); if (progress) progress.style.width='0%';
 });
 
-/* -------------- INIT -------------- */
+/* ===== INIT ===== */
 (function init(){
-  targetXEl && (targetXEl.textContent = String(CONFIG.targetSteps));
+  targetXEl    && (targetXEl.textContent    = String(CONFIG.targetSteps));
   planTargetEl && (planTargetEl.textContent = String(CONFIG.targetSteps));
-  ensureBoard(); ensureRootRails(); refreshInventoryUI(); refreshPlanAndRunButton();
+  ensureRootRails(); ensureBoard(); refreshInventoryUI(); refreshPlanAndRunButton();
+  wirePanel();
+  console.log('[nivel3] ready');
+})();
+
+/* ===== AUTOSCROLL EN DRAG (viewport + contenedores) ===== */
+(() => {
+  const MARGIN = 80;      // px desde el borde de la ventana para empezar a auto-scrollear
+  const SPEED  = 20;      // px por tick
+  const ZONE_MARGIN = 40; // margen dentro del workspace/panel para auto-scroll interno
+  let rafId = null;
+
+  function scrollViewportIfNeeded(e){
+    const doc = document.scrollingElement || document.documentElement;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const x = e.clientX, y = e.clientY;
+
+    if (y < MARGIN)                doc.scrollTop  -= SPEED;
+    else if (y > vh - MARGIN)      doc.scrollTop  += SPEED;
+
+    if (x < MARGIN)                doc.scrollLeft -= SPEED;
+    else if (x > vw - MARGIN)      doc.scrollLeft += SPEED;
+  }
+
+  function scrollContainerIfNeeded(container, e){
+    if (!container) return;
+    const r = container.getBoundingClientRect();
+    const y = e.clientY, x = e.clientX;
+
+    if (y < r.top + ZONE_MARGIN)            container.scrollTop  -= SPEED;
+    else if (y > r.bottom - ZONE_MARGIN)    container.scrollTop  += SPEED;
+
+    if (x < r.left + ZONE_MARGIN)           container.scrollLeft -= SPEED;
+    else if (x > r.right - ZONE_MARGIN)     container.scrollLeft += SPEED;
+  }
+
+  function onGlobalDragOver(e){
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      scrollViewportIfNeeded(e);
+      scrollContainerIfNeeded(document.getElementById('workspace'), e);
+      scrollContainerIfNeeded(document.getElementById('blocks-panel'), e);
+    });
+  }
+
+  function stopAutoScroll(){
+    cancelAnimationFrame(rafId);
+    rafId = null;
+  }
+
+  document.addEventListener('dragover', onGlobalDragOver, { passive: true });
+  document.addEventListener('drop',      stopAutoScroll,   { passive: true });
+  document.addEventListener('dragend',   stopAutoScroll,   { passive: true });
 })();

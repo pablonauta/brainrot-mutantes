@@ -1,119 +1,318 @@
-/* ===== Base (mismo look del nivel 1) ===== */
-* { box-sizing: border-box; }
+/* =========================
+   NIVEL 2 — Gangnam Style Mining (CSS)
+   Estética Brain Rot, misma línea visual que Nivel 1
+   ========================= */
+
+/* -------- Variables -------- */
 :root{
-  --bg:#0d0d0d; --panel:#1a1a1a; --work:#121212; --block:#2a2a2a;
-  --accent:#ff4d6d; --cyan:#00bfff; --amber:#ffcc00; --ink:#fff;
-  --muted:#bbb; --dash:#777; --edge:#666;
+  --bg: #0d0d0d;
+  --text: #ffffff;
+  --muted:#a7abb3;
+  --accent: #ff4d6d;
+  --accent-2:#ff1f4d;
+
+  --panel:#17181a;
+  --panel-2:#1f2023;
+  --ws:#121316;
+  --drop:#191a1f;
+
+  --border:#3a3d44;
+  --border-2:#575b66;
+
+  --block:#262936;
+  --block-border:#4a4f5b;
+
+  --loop-border:#ffcc00;
+  --loop-bg:#332b00;
+
+  --ok:#22c55e;
+
+  --radius:12px;
+  --shadow:0 2px 10px rgba(0,0,0,.35);
 }
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
 body{
-  margin:0; padding:0; background:var(--bg); color:var(--ink);
-  font-family:"Orbitron",system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial,sans-serif;
+  margin:0;
+  background: radial-gradient(circle at 50% 0%, #0e0e10, #000 70%);
+  color:var(--text);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  line-height:1.35;
 }
-h1,h2{ color:var(--accent); text-align:center; text-shadow:0 0 8px var(--accent); }
 
-.container{ max-width:1100px; margin:0 auto; padding:16px; }
-.layout{ display:grid; grid-template-columns:1fr; gap:16px; }
+/* =========================
+   Topbar
+   ========================= */
+.topbar{
+  padding:18px 16px 14px;
+  text-align:center;
+  border-bottom:1px solid var(--border);
+  background: linear-gradient(180deg, rgba(255,77,109,.10), transparent 70%);
+}
+.topbar h1{
+  margin:0 0 8px;
+  font-weight:800;
+  color:var(--accent);
+  text-shadow:0 0 8px rgba(255,77,109,.4);
+}
+.topbar p{ margin:0; color:var(--muted); }
+
+/* =========================
+   Contenedor + layout
+   ========================= */
+.container{ max-width:1160px; margin:0 auto; padding:16px; }
+
+.layout{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:16px;
+}
 @media (min-width:1100px){
-  .layout{ grid-template-columns:300px minmax(0,1fr) 380px; align-items:start;
-           grid-template-areas:"panel workspace game"; }
-  .panel{grid-area:panel;} .workspace{grid-area:workspace;} .game{grid-area:game;}
+  .layout{
+    grid-template-columns:320px minmax(0,1fr) 420px;
+    grid-template-areas:"panel workspace game";
+    gap:20px;
+    align-items:start;
+  }
+  .panel{ grid-area:panel; }
+  .workspace{ grid-area:workspace; }
+  .game{ grid-area:game; }
 }
-@media (min-width:700px) and (max-width:1099px){
-  .layout{ grid-template-columns:280px minmax(0,1fr);
-           grid-template-areas:"panel workspace" "panel game"; }
+.panel,.workspace,.game{ min-width:0; }
+
+/* =========================
+   Panel (inventario + bloques)
+   ========================= */
+.panel h2{ margin:0 0 8px; font-weight:800; }
+.inventory{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:10px;
+  margin-bottom:10px;
+}
+.inv-line{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 0; font-size:.96rem;
+}
+.inv-label{ color:var(--muted); }
+.inv-badge{
+  background:#16200a;
+  border:1px solid #b2f25f;
+  color:#d9ff83;
+  padding:2px 8px;
+  border-radius:8px;
+  font-weight:700;
 }
 
-/* ===== Panel ===== */
 #blocks-panel{
-  display:flex; flex-wrap:wrap; gap:8px; padding:12px;
-  border-radius:8px; background:var(--panel); border-bottom:2px solid var(--accent);
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:12px;
+  display:flex; flex-wrap:wrap; gap:10px;
+  margin-bottom:12px;
 }
+
 .block{
-  border:2px solid #555; border-radius:8px; background:var(--block);
-  padding:8px 12px; margin:4px 0; box-shadow:0 2px 4px rgba(0,0,0,.3);
+  background:var(--panel-2);
+  border:2px solid var(--block-border);
+  border-radius:10px;
+  padding:8px 12px;
+  box-shadow:var(--shadow);
   cursor:grab; user-select:none;
-  transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
 }
-.block:hover{ transform:scale(1.05); border-color:var(--accent); box-shadow:0 0 10px var(--accent); }
-.block.disabled{ opacity:.5; pointer-events:none; }
+.block:hover{ transform: translateY(-1px); border-color: var(--accent); }
 
-/* ===== Workspace ===== */
+/* Tipos */
+.block.simple{ background: #232633; }
+.block.loop{ border-color:var(--loop-border); background: rgba(255,204,0,.08); }
+
+/* Loop del panel (preview) */
+.block.loop .loop-head{ font-weight:700; }
+.block.loop .dropzone{ margin-top:6px; min-height:38px; border:1px dashed var(--border-2); border-radius:8px; }
+
+/* Estado inventario sin stock */
+.disabled{ opacity:.45; filter: grayscale(.2); pointer-events:none; }
+
+/* =========================
+   Workspace / Programa
+   ========================= */
+.workspace h2{ margin:0 0 8px; font-weight:800; }
 #workspace{
-  min-height:420px; padding:16px; background:var(--work);
-  border:2px dashed var(--edge); border-radius:10px;
+  min-height:420px;
+  background:var(--ws);
+  border:2px dashed var(--border-2);
+  border-radius:12px;
+  padding:14px;
 }
-.dropzone{
-  min-height:56px; padding:10px; margin:8px 0;
-  border:2px dashed var(--dash); border-radius:8px; background:#1b1b1b;
-}
-.rail-hint{ opacity:.65; font-size:.9rem; }
 
-/* Bloques dentro del programa (mismo lenguaje visual del nivel 1) */
-#workspace .block, #workspace .dropzone .block, #workspace [data-type], #workspace .placed{
-  display:flex; align-items:center; justify-content:space-between; gap:8px;
-  border:2px solid var(--cyan); border-radius:8px; background:#1a1a2e;
-  padding:6px 10px; margin:6px 0; color:var(--ink); font-weight:700;
-  box-shadow:0 2px 6px rgba(0,0,0,.4);
+/* Bloques clonados dentro del programa (refuerzo visual) */
+#workspace .block{
+  background:#1b1e2a;
+  border-color:#5b78ff;
 }
-#workspace .block:hover{ border-color:var(--accent); transform:scale(1.04); }
-#workspace .block.loop{ border-color:var(--amber); background:#332b00; display:block; }
-#workspace .block.loop .loop-head{ display:flex; align-items:center; gap:8px; font-size:.95rem; }
+#workspace .block:hover{ border-color: var(--accent); }
+
+/* Loop dentro del programa */
+#workspace .block.loop{
+  position:relative;
+  display:grid; grid-template-rows:auto 1fr; row-gap:6px;
+  border-color:var(--loop-border);
+  background:var(--loop-bg);
+}
+#workspace .block.loop .loop-head{
+  display:flex; align-items:center; gap:8px; font-weight:800;
+}
 #workspace .block.loop .loop-n{
-  display:inline-block; margin:0 6px; padding:2px 6px;
-  border:1px solid var(--amber); border-radius:6px; background:#3b2a00; font-weight:800;
+  display:inline-block; padding:2px 6px; border:1px solid var(--loop-border);
+  border-radius:6px; background:#3b2a00; font-weight:800;
 }
 #workspace .block.loop .dropzone{
-  display:block; width:100%; min-height:56px; margin-top:6px; padding:8px;
-  border:2px dashed var(--dash); border-radius:6px; background:#1a1a1a;
+  min-height:60px; background:#14161c; border:2px dashed #666c77; border-radius:8px; padding:8px;
 }
 
-/* Botoncito borrar */
+/* Botón mini eliminar */
 .btn-mini.btn-remove{
-  background:#2a2a2a; border:1px solid #555; color:#fff;
-  border-radius:6px; padding:2px 6px; line-height:1; cursor:pointer;
+  background:transparent; border:1px solid var(--accent); color:var(--accent);
+  border-radius:6px; padding:0 8px; line-height:1.6; cursor:pointer;
 }
-.btn-mini.btn-remove:hover{ filter:brightness(1.2); }
+.btn-mini.btn-remove:hover{ filter: brightness(1.1); }
 
-/* Botonera */
-.tools{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; align-items:center; }
+/* Dropzones genéricas */
+.dropzone{
+  min-height:44px; padding:8px; border:1px dashed var(--border); border-radius:10px;
+  background:var(--drop); transition: box-shadow .12s ease, outline .12s ease;
+}
+.dropzone.is-hover{ outline:2px solid var(--accent); }
+
+/* Rieles en raíz (para sueltos) */
+.root-rail{ margin:8px 0; background:#181a1f; border:2px dashed #666c77; border-radius:8px; padding:8px; }
+.rail-hint{ color:var(--muted); font-size:.95rem; }
+
+/* =========================
+   Herramientas / Botonera
+   ========================= */
+.tools{
+  display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px;
+}
 .tools button{
-  padding:10px 12px; border-radius:10px; border:0; font-weight:700; cursor:pointer;
-  background:#2b2b2b;
+  background:linear-gradient(#2b2c31, #222328);
+  color:#fff; border:1px solid #333; border-radius:10px;
+  padding:10px 16px; min-height:42px; cursor:pointer;
+  box-shadow:0 2px 6px rgba(0,0,0,.35);
+  transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
 }
-#btn-run{ background:var(--accent); }
-#btn-run:disabled{ opacity:.5; cursor:not-allowed; }
+.tools button:hover{ transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,.45); }
+.tools button:active{ transform: translateY(0); box-shadow: 0 1px 4px rgba(0,0,0,.3); }
 
-/* ===== Board (estética nivel 1) ===== */
+#btn-run{ border-color:#1f8f3a; background: linear-gradient(#27ae60, #1e874b); font-weight:700; }
+#btn-run[disabled]{ filter: grayscale(.6) brightness(.85); cursor:not-allowed; }
+
+.tools .speed{ display:flex; align-items:center; gap:8px; font-size:.95rem; color:var(--muted); }
+.tools .speed input[type="range"]{ height:6px; }
+
+/* Plan + Tips */
+.plan{ margin-top:10px; color:var(--muted); display:grid; gap:4px; }
+details.tips summary{ cursor:pointer; color:#d0d3da; }
+details.tips ul{ margin:.25rem 0 0 1rem; color:var(--muted); }
+
+/* =========================
+   Tablero del Nivel (campo vertical)
+   ========================= */
+.game h2{ margin:0 0 8px; font-weight:800; }
 .board{
-  width:100%; aspect-ratio:1/1; max-height:80vh; position:relative; overflow:hidden;
-  border:2px solid #444; border-radius:10px;
-  background:radial-gradient(ellipse at center, #0f1220 0%, #0a0d18 60%, #090a12 100%);
+  position:relative;
+  width:100%;
+  aspect-ratio: 9 / 16;            /* alto estilo pista vertical */
+  max-height: 78vh;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background: radial-gradient(ellipse at top, #0a0a14 10%, #0b0b10 55%, #0a0a0a 100%);
+  overflow:hidden;
 }
-.field{ position:absolute; inset:0; }
+
+/* Campo y pista */
+.field{ position:absolute; inset:0; display:grid; place-items:center; }
 .track{
-  position:absolute; left:50%; top:8%; width:2px; height:84%; transform:translateX(-50%);
-  background:linear-gradient(#555, #888); box-shadow:0 0 10px rgba(0,191,255,.35);
+  position:absolute; left:50%; top:0; transform:translateX(-50%);
+  width:min(30%, 160px);
+  height:100%;
+  background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
+  border-left: 2px dashed #535665;
+  border-right:2px dashed #535665;
+  box-shadow: inset 0 0 40px rgba(0,0,0,.45);
+  border-radius:10px;
 }
+
+/* Asteroide (objetivo) */
 .asteroid{
-  position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-  font-size:42px; filter:drop-shadow(0 0 10px rgba(255,200,0,.6));
+  position:absolute;
+  left:50%; transform:translateX(-50%);
+  top: 12%;                         /* ~alto fijo, JS calcula hitbox */
+  font-size: 28px;
+  filter: drop-shadow(0 0 10px rgba(255,255,255,.15));
 }
-/* La nave ahora se ancla al inicio de la pista (top:8%) y sube en Y */
+
+/* Mover: contenedor que sube */
 .mover{
-  position:absolute; left:50%; top:8%;
-  transform:translate(-50%, 0px); transition:transform .2s ease-out;
+  position:absolute; left:50%; top:0;
+  transform: translate(-50%, 0);    /* JS reemplaza el translateY */
+  will-change: transform;
 }
+
+/* Nave con “baile” (animación se pausa con .pause) */
 .ship{
-  font-size:36px; display:inline-block; filter:drop-shadow(0 0 8px rgba(255,77,109,.7));
-  animation:dance .8s infinite ease-in-out;
+  width: 36px; height: 36px;
+  display:grid; place-items:center;
+  font-size: 22px;                  /* emoji 🚀 tamaño visual */
+  filter: drop-shadow(0 0 10px rgba(157,214,255,.6));
+  animation: gangnam 0.9s infinite ease-in-out;
 }
-.ship.pause{ animation:none; }
+.ship.pause{ animation-play-state: paused; }
 
-@keyframes dance{
-  0%,100%{ transform:translateY(0) rotate(0deg) scale(1); }
-  25%{ transform:translateY(-4px) rotate(-5deg) scale(1.02); }
-  50%{ transform:translateY(0) rotate(0deg) scale(1); }
-  75%{ transform:translateY(-4px) rotate(5deg) scale(1.02); }
+@keyframes gangnam{
+  0%   { transform: translateY(-2px) rotate(-2deg) }
+  50%  { transform: translateY(2px)  rotate( 2deg) }
+  100% { transform: translateY(-2px) rotate(-2deg) }
 }
 
-.foot{ text-align:center; color:var(--muted); margin-top:12px; }
+/* Leyenda */
+.legend{
+  margin-top:8px; color:var(--muted); text-align:center; font-size:.95rem;
+}
+
+/* =========================
+   Toasts (coincide con showToast del JS)
+   ========================= */
+.toast{
+  position: fixed;
+  left: 50%; bottom: 24px;
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  background: #1b1c20;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 10px;
+  transition: .22s ease;
+  box-shadow: var(--shadow);
+  z-index: 999;
+}
+.toast.is-visible{ opacity:1; transform: translate(-50%, 0); }
+.toast--success{ border-color: var(--ok); }
+.toast--error{ border-color: #e11d48; }
+.toast--info{  border-color: #64748b; }
+
+/* =========================
+   Footer
+   ========================= */
+.foot{
+  border-top:1px solid var(--border);
+  color:var(--muted);
+  text-align:center;
+  padding:14px 10px 26px;
+  margin-top:6px;
+}
