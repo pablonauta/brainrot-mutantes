@@ -9,7 +9,7 @@
   <title>Órbita de Memes — Briefing</title>
   <link rel="stylesheet" href="../css/intro.css"><!-- relativo desde /paginas/ -->
   <!-- Preload: misma URL que el <img> -->
-  <link rel="preload" as="image" href="../img/orbita-memes.png">
+  <link rel="preload" as="image" href="/brainrot-mutantes/img/orbita-memes.png">
 </head>
 <body>
   <main class="panel">
@@ -18,7 +18,7 @@
 
     <figure class="hero hero--cover">
       <img
-        src="../img/orbita-memes.png"
+        src="/brainrot-mutantes/img/orbita-memes.png"
         alt="Nave espacial oxidada orbitando un planeta-meme; un brain rot en la cabina contiene los glitches que intentan escapar."
         width="1200" height="675"
         loading="eager" decoding="async">
@@ -64,7 +64,7 @@
       document.getElementById('title').textContent = `Órbita de Memes — Briefing para ${name}`;
       document.getElementById('hello').textContent = `Bienvenido/a, ${name}. Prepará la nave para el desafío.`;
       document.getElementById('start').addEventListener('click', () => {
-        window.location.href = '../paginas/nivel1.html'; // relativo desde /paginas/
+        window.location.href = 'nivel1.html'; // relativo desde /paginas/
       });
     });
   </script>
