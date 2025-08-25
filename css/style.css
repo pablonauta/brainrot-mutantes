@@ -138,7 +138,7 @@ button:hover {
 }
 
 .video-exp {
-  width: 240px;    /* fijá el ancho que quieras: 160, 200, 240... */
+  width: 360px;    /* fijá el ancho que quieras: 160, 200, 240... */
   height: auto;    /* mantiene la proporción del video */
   max-width: none; /* ignora reglas “responsivas” globales */
   display: block;  /* opcional: para poder centrar fácil */
