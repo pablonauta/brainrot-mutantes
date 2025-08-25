@@ -6,7 +6,7 @@ const CONFIG = {
   inventoryDefaults: { loops: 2, moves: 19 },   // obliga a usar ciclos
   msPerStepDefault: 250,
   hoverGap: 28,
-  nextLevelUrl: '/paginas/intronivel3.html'                  // opcional
+  nextLevelUrl: 'intronivel3.html'                  // opcional
 };
 const MOVE_LABEL = 'Subir 1';
 

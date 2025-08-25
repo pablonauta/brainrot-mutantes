@@ -4,7 +4,7 @@
 const CONFIG = {
   targetSteps: 36,                 // 3 × 4 × (ANTIROT + SELLAR + FOCO)
   msPerStepDefault: 220,
-  nextLevelUrl: '/paginas/final.html',
+  nextLevelUrl: 'final.html',
   allowedLoopSizes: [3, 4],
 };
 

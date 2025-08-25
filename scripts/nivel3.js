@@ -4,7 +4,7 @@ const CONFIG = {
   targetSteps: 24,
   inventoryDefaults: { loops: 2, syncs: 4, beams: 4 },
   msPerStepDefault: 220,
-  nextLevelUrl: '/paginas/intronivel4.html',
+  nextLevelUrl: 'intronivel4.html',
 };
 
 const T_LOOP='loop', T_SYNC='sync', T_BEAM='beam';
