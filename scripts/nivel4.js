@@ -5,7 +5,7 @@ const CONFIG = {
   targetSteps: 36,                 // 3 × 4 × (ANTIROT + SELLAR + FOCO)
   msPerStepDefault: 220,
   nextLevelUrl: '/paginas/final.html',
-  allowedLoopSizes: [3, 4],        // <- nombre correcto + valores correctos
+  allowedLoopSizes: [3, 4],
 };
 
 /* ================== DOM ================== */
@@ -196,7 +196,60 @@ function wirePanel(){
     });
   });
 }
-wirePanel();
+
+/* ====== Target amplio: acepta drop sobre loop-box o workspace ====== */
+function resolveDropTargetFromPoint(x, y){
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+
+  // 1) Si es una dropzone, listo
+  const dz = el.closest?.('.dropzone');
+  if (dz) return dz;
+
+  // 2) Si soltaron sobre la "caja" del loop, redirigí a su .dropzone interna
+  const loopBox = el.closest?.('.block.loop');
+  if (loopBox) return loopBox.querySelector('.dropzone');
+
+  // 3) Si es cualquier parte del workspace, usá el workspace (raíz)
+  if (wsEl && wsEl.contains(el)) return wsEl;
+
+  return null;
+}
+
+/* Autoscroll suave del workspace cuando el puntero está cerca de los bordes */
+function autoscrollWorkspace(e){
+  if (!wsEl) return;
+  const rect = wsEl.getBoundingClientRect();
+  const t = 60;      // zona sensible en px
+  const speed = 18;  // cuánto scrollea por tick
+
+  if (e.clientY < rect.top + t) wsEl.scrollTop -= speed;
+  else if (e.clientY > rect.bottom - t) wsEl.scrollTop += speed;
+}
+
+/* Delegación global mejorada */
+document.addEventListener('dragover', (e)=>{
+  const t = resolveDropTargetFromPoint(e.clientX, e.clientY);
+  if (!t) return;
+  e.preventDefault();
+  autoscrollWorkspace(e);
+
+  // feedback visual
+  document.querySelectorAll('.dropzone.is-hover, #workspace.is-hover')
+    .forEach(n=>n.classList.remove('is-hover'));
+  t.classList.add('is-hover');
+}, true);
+
+document.addEventListener('drop', (e)=>{
+  const t = resolveDropTargetFromPoint(e.clientX, e.clientY);
+  if (!t) return;
+  e.preventDefault(); e.stopPropagation();
+
+  document.querySelectorAll('.dropzone.is-hover, #workspace.is-hover')
+    .forEach(n=>n.classList.remove('is-hover'));
+
+  handleDropOnDropzone(t, parseDnDPayload(e));
+}, true);
 
 function loopDepth(el){
   let d = 0, p = el?.parentElement;
@@ -213,17 +266,18 @@ function parseDnDPayload(e){
 }
 
 function handleDropOnDropzone(dz, payload){
-  if (dz.closest('#blocks-panel')) return; // no soltar dentro del panel
+  if (!dz) return;
+  if (dz.closest && dz.closest('#blocks-panel')) return; // no soltar dentro del panel
   const { from, type } = payload || {};
 
   // mover dentro del workspace
   if (from === 'ws' && draggingEl){
     if (draggingEl.dataset.type === T_LOOP){
-      const parentLoop = dz.closest('.block.loop');
+      const parentLoop = dz.closest?.('.block.loop');
       const newDepth = parentLoop ? loopDepth(parentLoop) + 1 : 0;
       if (newDepth >= 2) return; // sólo 2 niveles
     }
-    if (draggingEl.contains(dz)) return;
+    if (draggingEl.contains?.(dz)) return;
     dz.appendChild(draggingEl);
     refreshPlan();
     return;
@@ -234,8 +288,8 @@ function handleDropOnDropzone(dz, payload){
 
   if (type === T_LOOP){
     const n = payload.loopN ?? 3;
-    if (!CONFIG.allowedLoopSizes.includes(n)) return; // <-- nombre correcto
-    const parentLoop = dz.closest('.block.loop');
+    if (!CONFIG.allowedLoopSizes.includes(n)) return;
+    const parentLoop = dz.closest?.('.block.loop');
     if (parentLoop && loopDepth(parentLoop) >= 1) return; // sólo 2 niveles
     if (inv.loops <= 0) return;
     dz.appendChild(createLoop(n)); inv.loops--; refreshInventory(); refreshPlan(); return;
@@ -267,55 +321,7 @@ function wireDropzone(dz){
   });
 }
 
-/* Delegación global (si sueltan sobre el contorno del loop) */
-document.addEventListener('dragover', (e)=>{
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const dz = el?.closest?.('.dropzone');
-  const loopBox = el?.closest?.('.block.loop');
-  if (dz || loopBox) e.preventDefault();
-}, true);
-document.addEventListener('drop', (e)=>{
-  const el = document.elementFromPoint(e.clientX, e.clientY);
-  const dz = el?.closest?.('.dropzone');
-  if (!dz) return;
-  e.preventDefault(); e.stopPropagation();
-  dz.classList.remove('is-hover');
-  handleDropOnDropzone(dz, parseDnDPayload(e));
-}, true);
-
-/* Workspace root */
-wsEl?.addEventListener('dragover', e=>{ e.preventDefault(); });
-wsEl?.addEventListener('drop', e=>{
-  e.preventDefault();
-  const payload = parseDnDPayload(e);
-  const { from, type } = payload || {};
-
-  if (from === 'ws' && draggingEl){
-    wsEl.appendChild(draggingEl);
-    refreshPlan();
-    return;
-  }
-  if (from !== 'panel') return;
-
-  if (type === T_LOOP){
-    if (inv.loops <= 0) return;
-    const n = payload.loopN ?? 3;
-    if (!CONFIG.allowedLoopSizes.includes(n)) return; // <-- nombre correcto
-    wsEl.appendChild(createLoop(n)); inv.loops--; refreshInventory(); refreshPlan(); return;
-  }
-  if (type === T_ANTI){
-    if (inv.anti <= 0) return;
-    wsEl.appendChild(createAnti()); inv.anti--; refreshInventory(); refreshPlan(); return;
-  }
-  if (type === T_SEAL){
-    if (inv.seal <= 0) return;
-    wsEl.appendChild(createSeal()); inv.seal--; refreshInventory(); refreshPlan(); return;
-  }
-  if (type === T_FOCUS){
-    if (inv.focus <= 0) return;
-    wsEl.appendChild(createFocus()); inv.focus--; refreshInventory(); refreshPlan(); return;
-  }
-});
+wirePanel();
 
 /* ========== Serialización / Plan ========== */
 function readProgram(zone){
@@ -450,5 +456,5 @@ resetBtn?.addEventListener('click', ()=>{
 (function init(){
   targetXEl    && (targetXEl.textContent    = String(CONFIG.targetSteps));
   planTargetEl && (planTargetEl.textContent = String(CONFIG.targetSteps));
-  ensureBoard(); refreshInventory(); refreshPlan();
+  ensureBoard(); refreshInventory(); refreshPlan(); wirePanel();
 })();
